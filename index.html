@@ -801,6 +801,24 @@ header h1{
 
                 <br><br>
 
+                <div class="selector-group">
+
+    <div class="selector shift"
+        onclick="selectShift(this,'Gasto')">
+
+        💸 Gasto
+
+    </div>
+
+    <div class="selector shift"
+        onclick="selectShift(this,'Ingreso')">
+
+        💰 Ingreso
+
+    </div>
+
+</div>
+
 
                 <br><br>
 
@@ -829,23 +847,7 @@ header h1{
 
                 </div>
 
-                <div class="selector-group">
-
-    <div class="selector shift"
-        onclick="selectShift(this,'Gasto')">
-
-        💸 Gasto
-
-    </div>
-
-    <div class="selector shift"
-        onclick="selectShift(this,'Ingreso')">
-
-        💰 Ingreso
-
-    </div>
-
-</div>
+                
 
                 <div id="positionsContainer"></div>
 
@@ -1429,25 +1431,13 @@ function renderPositions(){
 
                 <div class="position-header">
 
-                    <select
-                        onchange="changePosition('${block.id}',this.value)">
-
-                        <option value="">
-                            Tipo de movimiento
-                        </option>
-
-                        ${positions.map(p=>`
-
-                            <option
-                                value="${p}"
-                                ${block.position===p?"selected":""}
-                            >
-                                ${p}
-                            </option>
-
-                        `).join("")}
-
-                    </select>
+                    <div style="
+    font-size:18px;
+    font-weight:bold;
+    color:#D40511;
+">
+    ${selectedWarehouse || "Concepto no seleccionado"}
+</div>
 
                     <button class="remove-btn"
                         onclick="removePosition('${block.id}')">
@@ -1550,7 +1540,7 @@ function updateSummary(){
         html+=`
 
             <div class="summary-item">
-                <span>${p.position || "Sin puesto"}</span>
+                <span>${selectedWarehouse || "Concepto no seleccionado"}</span>
                 <strong>${subtotal}</strong>
             </div>
 
@@ -1603,17 +1593,9 @@ submitButton.disabled=true;
             return;
         }
 
-        const invalidPosition =
-    positionsData.some(
-        p=>p.position.trim()===""
-    );
-
-if(invalidPosition){
-
-   alert("Selecciona si el movimiento es Gasto o Ingreso");
-
+        if(selectedShift===""){
+    alert("Selecciona si el movimiento es Gasto o Ingreso");
     return;
-
 }
 
         const total=
@@ -3041,7 +3023,7 @@ function viewReport(reportId){
         </div>
 
         <div class="summary-item">
-            <strong>Turno</strong>
+            <strong>Tipo</strong>
             <span>${report.shift}</span>
         </div>
 
