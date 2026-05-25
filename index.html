@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>DHL Workforce Planning V7.1</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+:root{
+    --dhl-red:#D40511;
+    --dhl-yellow:#FFCC00;
+    --bg:#f5f5f5;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    background:var(--bg);
+}
+
+header{
+    background:var(--dhl-yellow);
+    padding:20px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+}
+
+header h1{
+    color:var(--dhl-red);
+}
+
+.datetime{
+    font-weight:bold;
+}
+
+.container{
+    max-width:1900px;
+    margin:auto;
+    padding:20px;
+}
+
+.top-buttons{
+    display:flex;
+    gap:15px;
+    margin-bottom:20px;
+}
+
+.top-buttons button{
+    flex:1;
+    padding:15px;
+    border:none;
+    border-radius:15px;
+    font-size:18px;
+    font-weight:bold;
+    cursor:pointer;
+    background:white;
+}
+
+.top-buttons button.active{
+    background:var(--dhl-red);
+    color:white;
+}
+
+.page{
+    display:none;
+}
+
+.page.active{
+    display:block;
+}
+
+.card{
+    background:white;
+    padding:20px;
+    border-radius:20px;
+    box-shadow:0 4px 12px rgba(0,0,0,.08);
+    margin-bottom:20px;
+}
+
+.filters{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:20px;
+}
+
+.filters select,
+.filters input{
+    width:100%;
+    padding:12px;
+    border-radius:12px;
+    border:1px solid #ccc;
+}
+
+.quick-filters{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:20px;
+}
+
+.quick-btn{
+    padding:12px 18px;
+    border:none;
+    border-radius:12px;
+    background:#eee;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.quick-btn.active{
+    background:var(--dhl-red);
+    color:white;
+}
+
+.kpis{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:20px;
+    margin-bottom:20px;
+}
+
+.kpi{
+    background:white;
+    padding:20px;
+    border-radius:20px;
+    border-left:8px solid var(--dhl-red);
+    cursor:pointer;
+    transition:.2s;
+}
+
+.kpi:hover{
+    transform:scale(1.02);
+}
+
+.kpi.active{
+    background:var(--dhl-red);
+    color:white;
+}
+
+.kpi.active .kpi-number{
+    color:white;
+}
+
+.kpi-number{
+    font-size:38px;
+    font-weight:bold;
+    color:var(--dhl-red);
+}
+
+.selector-group{
+    display:flex;
+    gap:15px;
+    flex-wrap:wrap;
+    margin:20px 0;
+}
+
+.selector{
+    padding:15px 20px;
+    border-radius:15px;
+    border:2px solid #ccc;
+    cursor:pointer;
+    background:white;
+    font-weight:bold;
+}
+
+.selector.active{
+    background:var(--dhl-red);
+    color:white;
+    border-color:var(--dhl-red);
+}
+
+.position-block{
+    background:#fafafa;
+    border-radius:20px;
+    padding:20px;
+    margin-bottom:20px;
+    border:2px solid #eee;
+}
+
+.position-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+    flex-wrap:wrap;
+    margin-bottom:20px;
+}
+
+.incidents-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:15px;
+}
+
+.incident-card{
+    background:white;
+    padding:15px;
+    border-radius:15px;
+}
+
+.counter{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:15px;
+    margin-top:12px;
+}
+
+.counter button{
+    width:40px;
+    height:40px;
+    border:none;
+    border-radius:50%;
+    font-size:20px;
+    cursor:pointer;
+}
+
+.plus{
+    background:var(--dhl-yellow);
+}
+
+.minus{
+    background:#ffdede;
+    color:var(--dhl-red);
+}
+
+.count{
+    font-size:26px;
+    font-weight:bold;
+}
+
+.add-position-btn{
+    padding:14px 20px;
+    border:none;
+    border-radius:12px;
+    background:var(--dhl-yellow);
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.submit-btn{
+    width:100%;
+    padding:18px;
+    border:none;
+    border-radius:15px;
+    background:var(--dhl-red);
+    color:white;
+    font-size:18px;
+    font-weight:bold;
+    cursor:pointer;
+    margin-top:20px;
+}
+
+.remove-btn{
+    background:#ffe1e1;
+    color:var(--dhl-red);
+    border:none;
+    padding:12px 16px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.summary-item{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:10px;
+    padding-bottom:10px;
+    border-bottom:1px solid #eee;
+}
+
+.report-layout{
+    display:grid;
+    grid-template-columns:2fr 1fr;
+    gap:20px;
+}
+
+.history-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.history-table th,
+.history-table td{
+    padding:12px;
+    border-bottom:1px solid #eee;
+    text-align:left;
+}
+
+.toast{
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    background:var(--dhl-red);
+    color:white;
+    padding:15px 25px;
+    border-radius:12px;
+    display:none;
+}
+
+@media(max-width:900px){
+
+    .report-layout{
+        grid-template-columns:1fr;
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+    <h1>📦 DHL Workforce Planning V7.1</h1>
+
+    <div class="datetime">
+        <div id="date"></div>
+        <div id="time"></div>
+    </div>
+
+</header>
+
+<div class="container">
+
+    <div class="top-buttons">
+
+        <button id="dashboardBtn" class="active">
+            📊 Dashboard
+        </button>
+
+        <button id="reportBtn">
+            📝 Programar
+        </button>
+
+    </div>
+
+    <!-- DASHBOARD -->
+
+    <div id="dashboardPage" class="page active">
+
+        <div class="card">
+
+            <div class="filters">
+
+                <div>
+                    <label>Nave</label>
+                    <select id="warehouseFilter"></select>
+                </div>
+
+                <div>
+                    <label>Turno</label>
+                    <select id="shiftFilter">
+                        <option value="all">Todos</option>
+                        <option value="Primero">Primero</option>
+                        <option value="Segundo">Segundo</option>
+                        <option value="Tercero">Tercero</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label>Fecha Inicio</label>
+                    <input type="date" id="startDate">
+                </div>
+
+                <div>
+                    <label>Fecha Fin</label>
+                    <input type="date" id="endDate">
+                </div>
+
+            </div>
+
+            <div class="quick-filters">
+
+                <button class="quick-btn"
+                    onclick="setQuickFilter('today')">
+                    Hoy
+                </button>
+
+                <button class="quick-btn"
+                    onclick="setQuickFilter('week')">
+                    Semana
+                </button>
+
+                <button class="quick-btn"
+                    onclick="setQuickFilter('month')">
+                    Mes
+                </button>
+
+                <button class="quick-btn"
+                    onclick="setQuickFilter('3months')">
+                    3 Meses
+                </button>
+
+            </div>
+
+        </div>
+
+        <div class="kpis" id="dynamicKpis"></div>
+
+        <div class="card">
+
+            <h2>📈 Incidencias</h2>
+
+            <br>
+
+            <canvas id="lineChart"></canvas>
+
+        </div>
+
+        <div class="card">
+
+            <h2>🏭 Incidencias por Nave</h2>
+
+            <br>
+
+            <canvas id="barChart"></canvas>
+
+        </div>
+
+        <div class="card">
+
+            <h2>📚 Histórico</h2>
+
+            <br>
+
+            <table class="history-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Fecha</th>
+                        <th>Usuario</th>
+                        <th>Nave</th>
+                        <th>Turno</th>
+                        <th>Total</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="historyTable"></tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    <!-- PROGRAMACION -->
+
+    <div id="reportPage" class="page">
+
+        <div class="report-layout">
+
+            <div class="card">
+
+                <h2>📝 Programación</h2>
+
+                <br>
+
+                <label>Usuario</label>
+                <input type="text" id="username">
+
+                <br><br>
+
+                <label>Fecha Programada</label>
+                <input type="date" id="scheduledDate">
+
+                <br><br>
+
+                <h3>Selecciona Nave</h3>
+
+                <div class="selector-group"
+                    id="warehouseSelectors"></div>
+
+                <div style="
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                    margin-top:20px;
+                    flex-wrap:wrap;
+                    gap:20px;
+                ">
+
+                    <h3>Selecciona Turno</h3>
+
+                    <button class="add-position-btn"
+                        onclick="addPositionBlock()">
+
+                        ➕ Agregar Puesto
+
+                    </button>
+
+                </div>
+
+                <div class="selector-group">
+
+                    <div class="selector shift"
+                        onclick="selectShift(this,'Primero')">
+                        ☀️ Primero
+                    </div>
+
+                    <div class="selector shift"
+                        onclick="selectShift(this,'Segundo')">
+                        🌤 Segundo
+                    </div>
+
+                    <div class="selector shift"
+                        onclick="selectShift(this,'Tercero')">
+                        🌙 Tercero
+                    </div>
+
+                </div>
+
+                <div id="positionsContainer"></div>
+
+            </div>
+
+            <div class="card">
+
+                <h2>🛒 Resumen</h2>
+
+                <br>
+
+                <div id="summary"></div>
+
+                <button class="submit-btn"
+                    onclick="submitReport()">
+
+                    🚀 Guardar Programación
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="toast" id="toast">
+    Programación guardada correctamente
+</div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+    getFirestore,
+    collection,
+    addDoc,
+    onSnapshot
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+
+  apiKey: "AIzaSyBpiI6tgL25Ssrt57n_9rxZJoTa9y0KC5g",
+  authDomain: "dhl-incidencias.firebaseapp.com",
+  projectId: "dhl-incidencias",
+  storageBucket: "dhl-incidencias.firebasestorage.app",
+  messagingSenderId: "592376274380",
+  appId: "1:592376274380:web:dee72b1b5c8fe5a6141169",
+  measurementId: "G-L8WWCG2QMZ"
+
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const warehouses = [
+"Nave 1","Nave 4","Nave 26","Nave 52",
+"Nave 84","Nave 82","Nave 101","Nave 109",
+"Forvia/HBPO","Mtto MHE","Falcon","Transportes"
+];
+
+const positions = [
+"Operario Flexible",
+"Tractorista",
+"Montacarguista",
+"Gruista",
+"Analista",
+"Coordinador"
+];
+
+const incidents = [
+"Vacante",
+"Capacitación",
+"Ausentismo",
+"Incapacidad",
+"Castigo",
+"Permiso sin goce",
+"Permiso con goce",
+"Vacaciones",
+"Producción",
+"Llenado de proceso",
+"Llenado de proceso (PAGADO)",
+"Actividades especiales VW",
+"Atraso ruta transporte",
+"Actividades especiales DHL",
+"Talleres / Cursos",
+"Sindicato"
+];
+
+let selectedWarehouse="";
+let selectedShift="";
+let reports=[];
+let activeIncident=null;
+
+const positionsData=[];
+
+const today=new Date();
+
+document.getElementById("scheduledDate").value =
+    today.toISOString().split("T")[0];
+
+document.getElementById("startDate").value =
+    today.toISOString().split("T")[0];
+
+document.getElementById("endDate").value =
+    today.toISOString().split("T")[0];
+
+function updateClock(){
+
+    const now=new Date();
+
+    document.getElementById("date")
+        .innerText=now.toLocaleDateString();
+
+    document.getElementById("time")
+        .innerText=now.toLocaleTimeString();
+
+}
+
+setInterval(updateClock,1000);
+
+updateClock();
+
+dashboardBtn.onclick=()=>{
+
+    dashboardBtn.classList.add("active");
+    reportBtn.classList.remove("active");
+
+    dashboardPage.classList.add("active");
+    reportPage.classList.remove("active");
+
+};
+
+reportBtn.onclick=()=>{
+
+    reportBtn.classList.add("active");
+    dashboardBtn.classList.remove("active");
+
+    reportPage.classList.add("active");
+    dashboardPage.classList.remove("active");
+
+};
+
+function renderWarehouses(){
+
+    const selectorContainer=
+        document.getElementById("warehouseSelectors");
+
+    const filter=
+        document.getElementById("warehouseFilter");
+
+    filter.innerHTML=
+        `<option value="all">Todas</option>`;
+
+    warehouses.forEach(w=>{
+
+        selectorContainer.innerHTML += `
+
+            <div class="selector"
+                onclick="selectWarehouse(this,'${w}')">
+
+                ${w}
+
+            </div>
+
+        `;
+
+        filter.innerHTML += `
+            <option value="${w}">
+                ${w}
+            </option>
+        `;
+
+    });
+
+}
+
+renderWarehouses();
+
+function selectWarehouse(element,name){
+
+    selectedWarehouse=name;
+
+    document
+        .querySelectorAll("#warehouseSelectors .selector")
+        .forEach(el=>el.classList.remove("active"));
+
+    element.classList.add("active");
+
+    updateSummary();
+
+}
+
+window.selectWarehouse=selectWarehouse;
+
+function selectShift(element,name){
+
+    selectedShift=name;
+
+    document
+        .querySelectorAll(".shift")
+        .forEach(el=>el.classList.remove("active"));
+
+    element.classList.add("active");
+
+    updateSummary();
+
+}
+
+window.selectShift=selectShift;
+
+function addPositionBlock(){
+
+    const id=Date.now()+Math.random();
+
+    const obj={
+        id,
+        position:"",
+        incidents:{}
+    };
+
+    incidents.forEach(i=>{
+        obj.incidents[i]=0;
+    });
+
+    positionsData.unshift(obj);
+
+    renderPositions();
+
+}
+
+window.addPositionBlock=addPositionBlock;
+
+function renderPositions(){
+
+    const container=
+        document.getElementById("positionsContainer");
+
+    container.innerHTML="";
+
+    positionsData.forEach(block=>{
+
+        let incidentsHTML="";
+
+        incidents.forEach(type=>{
+
+            incidentsHTML += `
+
+                <div class="incident-card">
+
+                    <div>${type}</div>
+
+                    <div class="counter">
+
+                        <button class="minus"
+                            onclick="changeCount('${block.id}','${type}',-1)">
+                            -
+                        </button>
+
+                        <div class="count">
+                            ${block.incidents[type]}
+                        </div>
+
+                        <button class="plus"
+                            onclick="changeCount('${block.id}','${type}',1)">
+                            +
+                        </button>
+
+                    </div>
+
+                </div>
+
+            `;
+
+        });
+
+        container.innerHTML += `
+
+            <div class="position-block">
+
+                <div class="position-header">
+
+                    <select
+                        onchange="changePosition('${block.id}',this.value)">
+
+                        <option value="">
+                            Selecciona puesto
+                        </option>
+
+                        ${positions.map(p=>`
+
+                            <option
+                                value="${p}"
+                                ${block.position===p?"selected":""}
+                            >
+                                ${p}
+                            </option>
+
+                        `).join("")}
+
+                    </select>
+
+                    <button class="remove-btn"
+                        onclick="removePosition('${block.id}')">
+
+                        ❌ Eliminar
+
+                    </button>
+
+                </div>
+
+                <div class="incidents-grid">
+
+                    ${incidentsHTML}
+
+                </div>
+
+            </div>
+
+        `;
+
+    });
+
+    updateSummary();
+
+}
+
+function changePosition(id,value){
+
+    const block=
+        positionsData.find(x=>x.id==id);
+
+    block.position=value;
+
+    updateSummary();
+
+}
+
+window.changePosition=changePosition;
+
+function changeCount(id,incident,qty){
+
+    const block=
+        positionsData.find(x=>x.id==id);
+
+    if(block.incidents[incident]+qty>=0){
+
+        block.incidents[incident]+=qty;
+
+    }
+
+    renderPositions();
+
+}
+
+window.changeCount=changeCount;
+
+function removePosition(id){
+
+    const index=
+        positionsData.findIndex(x=>x.id==id);
+
+    positionsData.splice(index,1);
+
+    renderPositions();
+
+}
+
+window.removePosition=removePosition;
+
+function updateSummary(){
+
+    const summary=
+        document.getElementById("summary");
+
+    let total=0;
+
+    let html=`
+
+        <div class="summary-item">
+            <strong>Nave</strong>
+            <span>${selectedWarehouse || "-"}</span>
+        </div>
+
+        <div class="summary-item">
+            <strong>Turno</strong>
+            <span>${selectedShift || "-"}</span>
+        </div>
+
+    `;
+
+    positionsData.forEach(p=>{
+
+        let subtotal=0;
+
+        incidents.forEach(i=>{
+            subtotal+=p.incidents[i];
+        });
+
+        total+=subtotal;
+
+        html+=`
+
+            <div class="summary-item">
+                <span>${p.position || "Sin puesto"}</span>
+                <strong>${subtotal}</strong>
+            </div>
+
+        `;
+
+    });
+
+    html+=`
+
+        <div class="summary-item">
+            <strong>Total</strong>
+            <strong>${total}</strong>
+        </div>
+
+    `;
+
+    summary.innerHTML=html;
+
+}
+
+addPositionBlock();
+
+async function submitReport(){
+
+    const username=
+        document.getElementById("username").value;
+
+    const scheduledDate=
+        document.getElementById("scheduledDate").value;
+
+    if(username.trim()===""){
+        alert("Ingresa usuario");
+        return;
+    }
+
+    if(selectedWarehouse===""){
+        alert("Selecciona nave");
+        return;
+    }
+
+    if(selectedShift===""){
+        alert("Selecciona turno");
+        return;
+    }
+
+    const total=
+        positionsData.reduce((acc,p)=>{
+
+            return acc +
+                Object.values(p.incidents)
+                    .reduce((a,b)=>a+b,0);
+
+        },0);
+
+    if(total===0){
+        alert("Agrega incidencias");
+        return;
+    }
+
+    await addDoc(collection(db,"reports"),{
+
+        username,
+        warehouse:selectedWarehouse,
+        shift:selectedShift,
+        positions:positionsData,
+        total,
+        scheduledDate,
+        timestamp:Date.now()
+
+    });
+
+    resetForm();
+
+    showToast();
+
+}
+
+window.submitReport=submitReport;
+
+function resetForm(){
+
+    positionsData.length=0;
+
+    addPositionBlock();
+
+    selectedWarehouse="";
+    selectedShift="";
+
+    document.getElementById("username").value="";
+
+    document
+        .querySelectorAll(".selector")
+        .forEach(el=>el.classList.remove("active"));
+
+    updateSummary();
+
+}
+
+function showToast(){
+
+    const toast=
+        document.getElementById("toast");
+
+    toast.style.display="block";
+
+    setTimeout(()=>{
+        toast.style.display="none";
+    },3000);
+
+}
+
+const lineChart=new Chart(
+    document.getElementById("lineChart"),
+    {
+        type:"bar",
+        data:{
+            labels:incidents,
+            datasets:[{
+                label:"Incidencias",
+                data:new Array(incidents.length).fill(0),
+                backgroundColor:"#D40511"
+            }]
+        }
+    }
+);
+
+const barChart=new Chart(
+    document.getElementById("barChart"),
+    {
+        type:"bar",
+        data:{
+            labels:warehouses,
+            datasets:[{
+                label:"Totales",
+                data:new Array(warehouses.length).fill(0),
+                backgroundColor:"#FFCC00"
+            }]
+        }
+    }
+);
+
+function setQuickFilter(type){
+
+    const start=
+        document.getElementById("startDate");
+
+    const end=
+        document.getElementById("endDate");
+
+    const now=new Date();
+
+    let future=new Date();
+
+    if(type==="today"){
+        future=now;
+    }
+
+    if(type==="week"){
+        future.setDate(now.getDate()+7);
+    }
+
+    if(type==="month"){
+        future.setMonth(now.getMonth()+1);
+    }
+
+    if(type==="3months"){
+        future.setMonth(now.getMonth()+3);
+    }
+
+    start.value=
+        formatDate(now);
+
+    end.value=
+        formatDate(future);
+
+    updateDashboard(reports);
+
+}
+
+window.setQuickFilter=setQuickFilter;
+
+function formatDate(date){
+
+    const year=date.getFullYear();
+    const month=String(date.getMonth()+1).padStart(2,"0");
+    const day=String(date.getDate()).padStart(2,"0");
+
+    return `${year}-${month}-${day}`;
+
+}
+
+function normalizeDate(dateString){
+
+    if(!dateString) return null;
+
+    if(dateString.includes("-")){
+
+        return new Date(dateString+"T00:00:00");
+
+    }
+
+    const parts=dateString.split("/");
+
+    if(parts.length===3){
+
+        const month=parseInt(parts[0])-1;
+        const day=parseInt(parts[1]);
+        const year=parseInt(parts[2]);
+
+        return new Date(year,month,day);
+
+    }
+
+    return new Date(dateString);
+
+}
+
+function filterReports(data){
+
+    const warehouseFilter=
+        document.getElementById("warehouseFilter").value;
+
+    const shiftFilter=
+        document.getElementById("shiftFilter").value;
+
+    const startDate=
+        normalizeDate(document.getElementById("startDate").value);
+
+    const endDate=
+        normalizeDate(document.getElementById("endDate").value);
+
+    endDate.setHours(23,59,59,999);
+
+    return data.filter(r=>{
+
+        const reportDate=
+            normalizeDate(r.scheduledDate);
+
+        const warehouseMatch=
+            warehouseFilter==="all" ||
+            r.warehouse===warehouseFilter;
+
+        const shiftMatch=
+            shiftFilter==="all" ||
+            r.shift===shiftFilter;
+
+        const dateMatch=
+            reportDate>=startDate &&
+            reportDate<=endDate;
+
+        return warehouseMatch &&
+            shiftMatch &&
+            dateMatch;
+
+    });
+
+}
+
+function renderDynamicKpis(total,incidentTotals){
+
+    const container=
+        document.getElementById("dynamicKpis");
+
+    container.innerHTML="";
+
+    container.innerHTML += `
+
+        <div class="kpi
+            ${activeIncident===null?"active":""}"
+
+            onclick="selectIncident(null)">
+
+            <h3>Total Programado</h3>
+
+            <div class="kpi-number">
+                ${total}
+            </div>
+
+        </div>
+
+    `;
+
+    Object.entries(incidentTotals)
+
+        .filter(([k,v])=>v>0)
+
+        .sort((a,b)=>b[1]-a[1])
+
+        .forEach(item=>{
+
+            container.innerHTML += `
+
+                <div class="kpi
+                    ${activeIncident===item[0]?"active":""}"
+
+                    onclick="selectIncident('${item[0]}')">
+
+                    <h3>${item[0]}</h3>
+
+                    <div class="kpi-number">
+                        ${item[1]}
+                    </div>
+
+                </div>
+
+            `;
+
+        });
+
+}
+
+function selectIncident(name){
+
+    activeIncident=name;
+
+    updateDashboard(reports);
+
+}
+
+window.selectIncident=selectIncident;
+
+function updateDashboard(data){
+
+    const filtered=
+        filterReports(data);
+
+    let total=0;
+
+    const incidentTotals={};
+
+    incidents.forEach(i=>{
+        incidentTotals[i]=0;
+    });
+
+    const warehouseTotals={};
+
+    warehouses.forEach(w=>{
+        warehouseTotals[w]=0;
+    });
+
+    const history=
+        document.getElementById("historyTable");
+
+    history.innerHTML="";
+
+    filtered.forEach(r=>{
+
+        let reportTotal=0;
+
+        r.positions.forEach(p=>{
+
+            incidents.forEach(i=>{
+
+                const value=
+                    p.incidents[i] || 0;
+
+                incidentTotals[i]+=value;
+
+                if(
+                    activeIncident===null ||
+                    activeIncident===i
+                ){
+                    reportTotal+=value;
+                }
+
+            });
+
+        });
+
+        warehouseTotals[r.warehouse]+=reportTotal;
+
+        total+=reportTotal;
+
+        history.innerHTML += `
+
+            <tr>
+
+                <td>${r.scheduledDate}</td>
+                <td>${r.username}</td>
+                <td>${r.warehouse}</td>
+                <td>${r.shift}</td>
+                <td>${reportTotal}</td>
+
+            </tr>
+
+        `;
+
+    });
+
+    renderDynamicKpis(
+        total,
+        incidentTotals
+    );
+
+    lineChart.data.datasets[0].data=
+
+        incidents.map(i=>{
+
+            if(activeIncident && activeIncident!==i){
+                return 0;
+            }
+
+            return incidentTotals[i];
+
+        });
+
+    lineChart.update();
+
+    barChart.data.datasets[0].data=
+        warehouses.map(w=>warehouseTotals[w]);
+
+    barChart.update();
+
+}
+
+function loadReports(){
+
+    onSnapshot(collection(db,"reports"),snapshot=>{
+
+        reports=[];
+
+        snapshot.forEach(doc=>{
+
+            reports.push(doc.data());
+
+        });
+
+        updateDashboard(reports);
+
+    });
+
+}
+
+document
+    .getElementById("warehouseFilter")
+    .addEventListener("change",()=>updateDashboard(reports));
+
+document
+    .getElementById("shiftFilter")
+    .addEventListener("change",()=>updateDashboard(reports));
+
+document
+    .getElementById("startDate")
+    .addEventListener("change",()=>updateDashboard(reports));
+
+document
+    .getElementById("endDate")
+    .addEventListener("change",()=>updateDashboard(reports));
+
+loadReports();
+
+</script>
+
+</body>
+</html>
