@@ -523,13 +523,12 @@ header h1{
                 </div>
 
                 <div>
-                    <label>Turno</label>
-                    <select id="shiftFilter">
-                        <option value="all">Todos</option>
-                        <option value="Primero">Primero</option>
-                        <option value="Segundo">Segundo</option>
-                        <option value="Tercero">Tercero</option>
-                    </select>
+                    <label>Tipo</label>
+<select id="shiftFilter">
+    <option value="all">Todos</option>
+    <option value="Gasto">Gasto</option>
+    <option value="Ingreso">Ingreso</option>
+</select>
                 </div>
 
                 <div>
@@ -797,60 +796,11 @@ header h1{
 
                 <br><br>
 
-                <label>Fecha Programada</label>
+                <label>Fecha</label>
                 <input type="date" id="scheduledDate">
 
                 <br><br>
 
-<label>
-    Aplicar programación a:
-</label>
-
-<div
-    style="
-        display:flex;
-        gap:10px;
-        flex-wrap:wrap;
-        margin-top:10px;
-    "
->
-
-    <label class="selector">
-        <input type="checkbox" class="multiDay" value="1">
-        Lun
-    </label>
-
-    <label class="selector">
-        <input type="checkbox" class="multiDay" value="2">
-        Mar
-    </label>
-
-    <label class="selector">
-        <input type="checkbox" class="multiDay" value="3">
-        Mié
-    </label>
-
-    <label class="selector">
-        <input type="checkbox" class="multiDay" value="4">
-        Jue
-    </label>
-
-    <label class="selector">
-        <input type="checkbox" class="multiDay" value="5">
-        Vie
-    </label>
-
-    <label class="selector">
-        <input type="checkbox" class="multiDay" value="6">
-        Sáb
-    </label>
-
-    <label class="selector">
-        <input type="checkbox" class="multiDay" value="0">
-        Dom
-    </label>
-
-</div>
 
                 <br><br>
 
@@ -868,7 +818,7 @@ header h1{
                     gap:20px;
                 ">
 
-                    <h3>Selecciona Turno</h3>
+                    <h3>Tipo de movimiento</h3>
 
                     <button class="add-position-btn"
                         onclick="addPositionBlock()">
@@ -881,28 +831,21 @@ header h1{
 
                 <div class="selector-group">
 
-                    <div class="selector shift"
-                        onclick="selectShift(this,'Primero')">
+    <div class="selector shift"
+        onclick="selectShift(this,'Gasto')">
 
-                        ☀️ Primero
+        💸 Gasto
 
-                    </div>
+    </div>
 
-                    <div class="selector shift"
-                        onclick="selectShift(this,'Segundo')">
+    <div class="selector shift"
+        onclick="selectShift(this,'Ingreso')">
 
-                        🌤 Segundo
+        💰 Ingreso
 
-                    </div>
+    </div>
 
-                    <div class="selector shift"
-                        onclick="selectShift(this,'Tercero')">
-
-                        🌙 Tercero
-
-                    </div>
-
-                </div>
+</div>
 
                 <div id="positionsContainer"></div>
 
