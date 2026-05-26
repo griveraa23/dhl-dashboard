@@ -522,18 +522,22 @@ header h1{
             <div class="filters">
 
                 <div>
-                    <label>Concepto</label>
-                    <select id="warehouseFilter"></select>
-                </div>
-
-                <div>
-                    <label>Tipo</label>
-<select id="shiftFilter">
+                   <label>Movimiento</label>
+<select id="warehouseFilter">
     <option value="all">Todos</option>
     <option value="Gasto">Gasto</option>
     <option value="Ingreso">Ingreso</option>
 </select>
                 </div>
+
+                <div style="display:none;">
+    <label>Tipo</label>
+    <select id="shiftFilter">
+        <option value="all">Todos</option>
+        <option value="Gasto">Gasto</option>
+        <option value="Ingreso">Ingreso</option>
+    </select>
+</div>
 
                 <div>
                     <label>Fecha Inicio</label>
@@ -665,7 +669,7 @@ header h1{
                         <th>Fecha</th>
                         <th>Usuario</th>
                         <th>Concepto</th>
-                        <th>Turno</th>
+                        <th>Movimiento</th>
                         <th>Total</th>
 
                         <th>Tipo</th>
@@ -1307,7 +1311,11 @@ function renderWarehouses(){
     selectorContainer.innerHTML = "";
 
     filter.innerHTML =
-        `<option value="all">Todas</option>`;
+    `
+    <option value="all">Todos</option>
+    <option value="Gasto">Gasto</option>
+    <option value="Ingreso">Ingreso</option>
+    `;
 
     warehouses.forEach(w=>{
 
@@ -1319,14 +1327,6 @@ function renderWarehouses(){
                 ${w}
 
             </div>
-
-        `;
-
-        filter.innerHTML += `
-
-            <option value="${w}">
-                ${w}
-            </option>
 
         `;
 
@@ -1649,8 +1649,11 @@ async function submitReport(){
             timestamp:creationTimestamp,
 
             createdAt:
-                new Date(creationTimestamp)
-                    .toLocaleString()
+                createdAt:
+    new Date(creationTimestamp)
+        .toLocaleString(),
+
+origin:"Manual"
 
         };
 
@@ -2040,8 +2043,8 @@ if(endDate){
     normalizeDate(r.date);
 
         const warehouseMatch=
-            warehouseFilter==="all" ||
-            r.movements?.some(m=>m.concept===warehouseFilter);
+    warehouseFilter==="all" ||
+    r.type===warehouseFilter;
 
         const shiftMatch=
             shiftFilter==="all" ||
@@ -2193,11 +2196,11 @@ function updateDashboard(data){
                 <td>${r.type}</td>
                 <td>$${movementTotal}</td>
 
-                <td>${r.type}</td>
+<td>${r.type}</td>
 
-                <td>${r.createdAt || "-"}</td>
+<td>${r.createdAt || "-"}</td>
 
-                <td>-</td>
+<td>${r.origin || "Manual"}</td>
 
                 <td>
 
@@ -2802,53 +2805,30 @@ window.deleteReport=deleteReport;
 
 function editReport(reportId){
 
-    const report=
+    const report =
         reports.find(
             r=>r.id===reportId
         );
 
-    editingReportId=reportId;
+    editingReportId = reportId;
 
     if(!report){
         return;
     }
 
-    /* IR A PROGRAMAR */
+    /* IR A AGREGAR MOVIMIENTO */
 
     reportBtn.click();
 
-    /* CARGAR DATOS */
+    /* FECHA */
 
     document.getElementById(
         "scheduledDate"
-    ).value=report.scheduledDate;
+    ).value = report.date;
 
-    selectedWarehouse=
-        report.warehouse;
+    /* TIPO */
 
-    selectedShift=
-        report.shift;
-
-    /* ACTIVAR Concepto */
-
-    document
-        .querySelectorAll(
-            "#warehouseSelectors .selector"
-        )
-        .forEach(el=>{
-
-            el.classList.remove("active");
-
-            if(
-                el.innerText.trim()===
-                report.warehouse
-            ){
-                el.classList.add("active");
-            }
-
-        });
-
-    /* ACTIVAR TURNO */
+    selectedShift = report.type;
 
     document
         .querySelectorAll(".shift")
@@ -2858,7 +2838,7 @@ function editReport(reportId){
 
             if(
                 el.innerText.includes(
-                    report.shift
+                    report.type
                 )
             ){
                 el.classList.add("active");
@@ -2866,19 +2846,25 @@ function editReport(reportId){
 
         });
 
-    /* CARGAR POSICIONES */
+    /* LIMPIAR */
 
-    positionsData.length=0;
+    positionsData.length = 0;
 
-    (report.positions || []).forEach(p=>{
+    /* CARGAR MOVIMIENTOS */
+
+    (report.movements || []).forEach(m=>{
 
         positionsData.push({
 
             id:Date.now()+Math.random(),
 
-            position:p.position,
+            concept:m.concept,
 
-            incidents:{...p.incidents}
+            position:report.type,
+
+            incidents:{
+                Monto:m.amount
+            }
 
         });
 
@@ -2887,14 +2873,13 @@ function editReport(reportId){
     renderPositions();
 
     document.getElementById(
-    "submitButtonText"
-).innerHTML=
-"💾 Actualizar Programación";
+        "submitButtonText"
+    ).innerHTML =
+        "💾 Actualizar Movimiento";
 
     updateSummary();
 
 }
-
 window.editReport=editReport;
 
 function viewReport(reportId){
@@ -2910,7 +2895,7 @@ function viewReport(reportId){
 
         <div class="summary-item">
             <strong>Fecha</strong>
-            <span>${report.scheduledDate}</span>
+            <span>${report.date}</span>
         </div>
 
         <div class="summary-item">
@@ -2919,50 +2904,25 @@ function viewReport(reportId){
         </div>
 
         <div class="summary-item">
-            <strong>Concepto</strong>
-            <span>${report.warehouse}</span>
+            <strong>Movimiento</strong>
+            <span>${report.type}</span>
         </div>
 
         <div class="summary-item">
-            <strong>Tipo</strong>
-            <span>${report.shift}</span>
+            <strong>Total</strong>
+            <span>$${report.total}</span>
+        </div>
+
+        <div class="summary-item">
+            <strong>Origen</strong>
+            <span>${report.origin || "Manual"}</span>
         </div>
 
         <br>
 
     `;
 
-    let grandTotal = 0;
-
-    (report.positions || []).forEach(position=>{
-
-        let subtotal = 0;
-
-        let incidentsHtml = "";
-
-        incidents.forEach(incident=>{
-
-            const qty =
-                position.incidents[incident] || 0;
-
-            if(qty>0){
-
-                subtotal += qty;
-
-                grandTotal += qty;
-
-                incidentsHtml += `
-
-                    <div class="summary-item">
-                        <span>${incident}</span>
-                        <strong>${qty}</strong>
-                    </div>
-
-                `;
-
-            }
-
-        });
+    (report.movements || []).forEach(m=>{
 
         html += `
 
@@ -2971,20 +2931,19 @@ function viewReport(reportId){
                     border:1px solid #eee;
                     border-radius:15px;
                     padding:15px;
-                    margin-bottom:20px;
+                    margin-bottom:15px;
                     background:#fafafa;
                 "
             >
 
-                <h3>${position.position}</h3>
-
-                <br>
-
-                ${incidentsHtml}
+                <div class="summary-item">
+                    <strong>Concepto</strong>
+                    <span>${m.concept}</span>
+                </div>
 
                 <div class="summary-item">
-                    <strong>Subtotal</strong>
-                    <strong>${subtotal}</strong>
+                    <strong>Monto</strong>
+                    <span>$${m.amount}</span>
                 </div>
 
             </div>
@@ -2993,24 +2952,6 @@ function viewReport(reportId){
 
     });
 
-    html += `
-
-        <div
-            style="
-                background:#D40511;
-                color:white;
-                padding:20px;
-                border-radius:15px;
-                text-align:center;
-                font-size:22px;
-                font-weight:bold;
-            "
-        >
-            Total Programado: ${grandTotal}
-        </div>
-
-    `;
-
     document.getElementById("detailContent").innerHTML =
         html;
 
@@ -3018,7 +2959,6 @@ function viewReport(reportId){
         "flex";
 
 }
-
 window.viewReport=viewReport;
 
 function closeDetailModal(){
