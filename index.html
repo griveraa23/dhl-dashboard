@@ -892,12 +892,12 @@ border:1px solid var(--border);
 
     <div class="chart-card">
 
-        <h2>🔥 Tendencia</h2>
+        <h2>🧠 Insights Financieros</h2>
 
         <br>
 
         <div class="chart-container">
-            <canvas id="trendChart"></canvas>
+            <div id="insightsBoard"></div>
         </div>
 
     </div>
@@ -2079,45 +2079,6 @@ const barChart=new Chart(
     }
 );
 
-const trendChart=new Chart(
-    document.getElementById("trendChart"),
-    {
-        type:"line",
-
-        data:{
-            labels:[],
-
-            datasets:[{
-                label:"Tendencia",
-
-                data:[],
-
-                borderColor:"#D40511",
-
-                backgroundColor:"rgba(212,5,17,0.2)",
-
-                fill:true,
-
-                tension:0.4
-            }]
-        },
-
-        options:{
-            responsive:true,
-            maintainAspectRatio:false,
-
-            scales:{
-                y:{
-                    beginAtZero:true,
-                    ticks:{
-                        precision:0,
-                        stepSize:1
-                    }
-                }
-            }
-        }
-    }
-);
 
 function setQuickFilter(type){
 
@@ -2494,7 +2455,204 @@ function renderGoalCard(balance, incomeTotal, expenseTotal){
 
     `;
 
-}    
+}
+
+function renderInsightsBoard(data){
+
+    let totalExpenses = 0;
+
+    const conceptFrequency = {};
+    const conceptAmounts = {};
+    const weekdayTotals = {};
+
+    let totalTransactions = 0;
+
+    data.forEach(r=>{
+
+        if(r.type!=="Gasto"){
+            return;
+        }
+
+        const date =
+            new Date(r.date + "T00:00:00");
+
+        const weekday =
+            date.toLocaleDateString(
+                "es-MX",
+                { weekday:"long" }
+            );
+
+        if(!weekdayTotals[weekday]){
+            weekdayTotals[weekday]=0;
+        }
+
+        (r.movements || []).forEach(m=>{
+
+            const amount =
+                Number(m.amount || 0);
+
+            totalExpenses += amount;
+
+            totalTransactions++;
+
+            /* FRECUENCIA */
+
+            if(!conceptFrequency[m.concept]){
+                conceptFrequency[m.concept]=0;
+            }
+
+            conceptFrequency[m.concept]++;
+
+            /* COSTOS */
+
+            if(!conceptAmounts[m.concept]){
+                conceptAmounts[m.concept]=0;
+            }
+
+            conceptAmounts[m.concept]+=amount;
+
+            /* DIAS */
+
+            weekdayTotals[weekday]+=amount;
+
+        });
+
+    });
+
+    /* MAYOR FUGA */
+
+    let topExpenseConcept="-";
+    let topExpenseAmount=0;
+
+    Object.entries(conceptAmounts)
+
+        .forEach(([concept,amount])=>{
+
+            if(amount>topExpenseAmount){
+
+                topExpenseAmount=amount;
+                topExpenseConcept=concept;
+
+            }
+
+        });
+
+    /* MÁS RECURRENTE */
+
+    let topFrequencyConcept="-";
+    let topFrequencyCount=0;
+
+    Object.entries(conceptFrequency)
+
+        .forEach(([concept,count])=>{
+
+            if(count>topFrequencyCount){
+
+                topFrequencyCount=count;
+                topFrequencyConcept=concept;
+
+            }
+
+        });
+
+    /* DIA MAS CARO */
+
+    let topDay="-";
+    let topDayAmount=0;
+
+    Object.entries(weekdayTotals)
+
+        .forEach(([day,total])=>{
+
+            if(total>topDayAmount){
+
+                topDayAmount=total;
+                topDay=day;
+
+            }
+
+        });
+
+    const averageTicket =
+
+        totalTransactions>0
+
+        ? totalExpenses / totalTransactions
+
+        : 0;
+
+    document.getElementById(
+        "insightsBoard"
+    ).innerHTML = `
+
+        <div class="goal-grid">
+
+            <div class="goal-item">
+
+                <span>🔥 Mayor fuga</span>
+
+                <br><br>
+
+                <strong>
+                    ${topExpenseConcept}
+                </strong>
+
+                <br>
+
+                $${topExpenseAmount.toLocaleString()}
+
+            </div>
+
+            <div class="goal-item">
+
+                <span>🔁 Más recurrente</span>
+
+                <br><br>
+
+                <strong>
+                    ${topFrequencyConcept}
+                </strong>
+
+                <br>
+
+                ${topFrequencyCount} movimientos
+
+            </div>
+
+            <div class="goal-item">
+
+                <span>📅 Día más caro</span>
+
+                <br><br>
+
+                <strong>
+                    ${topDay}
+                </strong>
+
+                <br>
+
+                $${topDayAmount.toLocaleString()}
+
+            </div>
+
+            <div class="goal-item">
+
+                <span>📊 Ticket promedio</span>
+
+                <br><br>
+
+                <strong>
+                    $${averageTicket.toFixed(0)}
+                </strong>
+
+            </div>
+
+        </div>
+
+    `;
+
+}
+    
 
 function updateDashboard(data){
 
@@ -2511,7 +2669,7 @@ function updateDashboard(data){
         conceptTotals[w]=0;
     });
 
-    const trendTotals = {};
+    
 
     const history =
         document.getElementById("historyTable");
@@ -2543,14 +2701,7 @@ function updateDashboard(data){
 
         });
 
-        if(!trendTotals[r.date]){
-            trendTotals[r.date]=0;
-        }
-
-        trendTotals[r.date] +=
-            r.type==="Ingreso"
-            ? movementTotal
-            : -movementTotal;
+        
 
         const conceptsText =
             (r.movements || [])
@@ -2642,6 +2793,8 @@ function updateDashboard(data){
     expenseTotal
 );
 
+renderInsightsBoard(filtered);
+
     lineChart.data.labels =
         Object.keys(conceptTotals);
 
@@ -2676,19 +2829,6 @@ function updateDashboard(data){
 
     payChart.update();
 
-    const orderedDates =
-        Object.keys(trendTotals).sort();
-
-    trendChart.data.labels =
-        orderedDates;
-
-    trendChart.data.datasets[0].label =
-        "Balance diario";
-
-    trendChart.data.datasets[0].data =
-        orderedDates.map(d=>trendTotals[d]);
-
-    trendChart.update();
 
 }
 
