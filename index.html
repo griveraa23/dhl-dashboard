@@ -506,6 +506,14 @@ border:1px solid var(--border);
 .goal-item strong{
     color:#00A3FF;
     font-size:22px;
+}
+
+.insights-card{
+    min-height:auto;
+}
+
+.insights-card .goal-grid{
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
 }    
 
 @media(max-width:900px){
@@ -521,6 +529,19 @@ border:1px solid var(--border);
 }
 
 @media(max-width:600px){
+
+    .insights-card{
+    min-height:auto !important;
+    overflow:visible;
+}
+
+.insights-card .goal-grid{
+    grid-template-columns:1fr;
+}
+
+.insights-card .goal-item{
+    min-height:auto;
+}
 
     header{
         flex-direction:column;
@@ -899,17 +920,15 @@ border:1px solid var(--border);
 
     </div>
 
-    <div class="chart-card">
+    <div class="chart-card insights-card">
 
-        <h2>🧠 Insights Financieros</h2>
+    <h2>🧠 Insights Financieros</h2>
 
-        <br>
+    <br>
 
-        <div class="chart-container">
-            <div id="insightsBoard"></div>
-        </div>
+    <div id="insightsBoard"></div>
 
-    </div>
+</div>
 
 </div>
 
