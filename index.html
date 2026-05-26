@@ -424,6 +424,7 @@ border:1px solid var(--border);
     border-radius:20px;
     box-shadow:0 4px 12px rgba(0,0,0,.08);
     min-height:420px;
+    overflow:hidden;
 }
 
 .chart-container{
@@ -618,8 +619,16 @@ border:1px solid var(--border);
     }
 
     .chart-card{
-        min-height:360px;
+    min-height:auto;
     }
+
+    #insightsBoard{
+    height:auto;
+}
+
+#insightsBoard .goal-grid{
+    grid-template-columns:1fr;
+}
 
     .chart-container{
         height:280px;
