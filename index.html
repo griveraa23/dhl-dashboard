@@ -1089,14 +1089,17 @@ async function login(){
 
     }
 
-    const user = users.find(u =>
+    const hashedPassword =
+    await hashPassword(password);
 
-        u.employeeId === employeeId &&
-        u.password === password &&
-        u.active === true
+const user = users.find(u =>
 
-    );
+    u.employeeId === employeeId &&
+    u.password === hashedPassword &&
+    u.active === true
 
+);
+    
     if(!user){
 
         document
