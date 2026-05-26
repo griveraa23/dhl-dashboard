@@ -825,39 +825,53 @@ border:1px solid var(--border);
             <div class="quick-filters">
 
     <button class="quick-btn"
-        onclick="setQuickFilter('today')">
+    onclick="setQuickFilter('today')">
 
-        Hoy
-
-    </button>
-
-    <button class="quick-btn"
-        onclick="setQuickFilter('week')">
-
-        Semana
-
-    </button>
-
-    <button class="quick-btn"
-        onclick="setQuickFilter('month')">
-
-        Mes
-
-    </button>
-
-                <button class="quick-btn"
-    onclick="setQuickFilter('biweekly')">
-
-    Quincena
+    Hoy
 
 </button>
 
-    <button class="quick-btn"
-        onclick="setQuickFilter('3months')">
+<button class="quick-btn"
+    onclick="setQuickFilter('week')">
 
-        3 Meses
+    Semana
 
-    </button>
+</button>
+
+<button class="quick-btn"
+    onclick="setQuickFilter('biweekly')">
+
+    Catorcena
+
+</button>
+
+<button class="quick-btn"
+    onclick="setQuickFilter('month')">
+
+    Mes
+
+</button>
+
+<button class="quick-btn"
+    onclick="setQuickFilter('3months')">
+
+    3 Meses
+
+</button>
+
+<button class="quick-btn"
+    onclick="setQuickFilter('6months')">
+
+    6 Meses
+
+</button>
+
+<button class="quick-btn"
+    onclick="setQuickFilter('12months')">
+
+    12 Meses
+
+</button>
 
     <button class="quick-btn"
         onclick="exportToExcel()"
@@ -2246,9 +2260,11 @@ function setQuickFilter(type){
     const buttonMap = {
     today:0,
     week:1,
-    month:2,
-    biweekly:3,
-    "3months":4
+    biweekly:2,
+    month:3,
+    "3months":4,
+    "6months":5,
+    "12months":6
 };
 
     const buttons =
@@ -2356,25 +2372,65 @@ if(type==="biweekly"){
 
 }
 
-    /* 3 MESES */
+/* 3 MESES */
 
-    if(type==="3months"){
+if(type==="3months"){
 
-        startDate=
-            new Date(
-                now.getFullYear(),
-                now.getMonth()-1,
-                1
-            );
+    startDate=
+        new Date(
+            now.getFullYear(),
+            now.getMonth()-2,
+            1
+        );
 
-        endDate=
-            new Date(
-                now.getFullYear(),
-                now.getMonth()+2,
-                0
-            );
+    endDate=
+        new Date(
+            now.getFullYear(),
+            now.getMonth()+1,
+            0
+        );
 
-    }
+}
+
+/* 6 MESES */
+
+if(type==="6months"){
+
+    startDate=
+        new Date(
+            now.getFullYear(),
+            now.getMonth()-5,
+            1
+        );
+
+    endDate=
+        new Date(
+            now.getFullYear(),
+            now.getMonth()+1,
+            0
+        );
+
+}
+
+/* 12 MESES */
+
+if(type==="12months"){
+
+    startDate=
+        new Date(
+            now.getFullYear(),
+            now.getMonth()-11,
+            1
+        );
+
+    endDate=
+        new Date(
+            now.getFullYear(),
+            now.getMonth()+1,
+            0
+        );
+
+}
 
     start.value=
         formatDate(startDate);
