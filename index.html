@@ -209,6 +209,9 @@ border:1px solid var(--border);
     background:#eee;
     cursor:pointer;
     font-weight:bold;
+    background:#132238;
+color:var(--text);
+border:1px solid var(--border);
 }
 
 .quick-btn.active{
@@ -255,17 +258,30 @@ border:1px solid var(--border);
 
 .selector{
     padding:15px 20px;
-    border-radius:15px;
-    border:2px solid #ccc;
+    border-radius:16px;
+    border:1px solid var(--border);
     cursor:pointer;
-    background:white;
+    background:#132238;
+    color:var(--text);
     font-weight:bold;
+    transition:.2s;
+    box-shadow:0 4px 12px rgba(0,0,0,.25);
 }
 
 .selector.active{
-    background:var(--dhl-red);
+    background:linear-gradient(
+        135deg,
+        #00A3FF,
+        #1E88E5
+    );
+
     color:white;
-    border-color:var(--dhl-red);
+
+    border-color:#00A3FF;
+
+    transform:translateY(-2px);
+
+    box-shadow:0 8px 20px rgba(0,163,255,.35);
 }
 
 .position-block{
