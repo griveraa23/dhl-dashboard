@@ -479,7 +479,7 @@ header h1{
             <div id="time"></div>
         </div>
 
-        Cámbialo por:
+        
 
 <button class="logout-btn"
     style="display:none;">
@@ -1589,196 +1589,108 @@ function updateSummary(){
 async function submitReport(){
 
     const submitButton =
-    document.querySelector(".submit-btn");
+        document.querySelector(".submit-btn");
 
-submitButton.disabled=true;
+    submitButton.disabled = true;
 
     try{
 
-        const username=
+        const username =
             document.getElementById("username").value;
 
-        const scheduledDate=
+        const scheduledDate =
             document.getElementById("scheduledDate").value;
 
         if(username.trim()===""){
             alert("Ingresa usuario");
-            return;
-        }
-
-        if(selectedWarehouse===""){
-            alert("Selecciona Concepto");
+            submitButton.disabled = false;
             return;
         }
 
         if(selectedShift===""){
-            alert("Selecciona turno");
+            alert("Selecciona si el movimiento es Gasto o Ingreso");
+            submitButton.disabled = false;
             return;
         }
 
-        if(selectedShift===""){
-    alert("Selecciona si el movimiento es Gasto o Ingreso");
-    return;
-}
+        if(positionsData.length===0){
+            alert("Agrega al menos un gasto o ingreso");
+            submitButton.disabled = false;
+            return;
+        }
 
-        const total=
+        const total =
             positionsData.reduce((acc,p)=>{
-
-                return acc +
-                    Object.values(p.incidents)
-                        .reduce((a,b)=>a+b,0);
-
+                return acc + (p.incidents.Monto || 0);
             },0);
 
         if(total===0){
             alert("Agrega al menos un monto");
+            submitButton.disabled = false;
             return;
         }
 
-        const creationType =
-
-    document.querySelectorAll(
-        ".multiDay:checked"
-    ).length>0
-
-    ? "multi-day"
-
-    : "manual";
-
         const creationTimestamp = Date.now();
 
-const reportDataBase={
+        const movementDataBase = {
 
-    username,
-    warehouse:"multiple",
-shift:selectedShift,
-positions:positionsData,
-    total,
+            username,
+            userId:currentUser.employeeId,
+            type:selectedShift,
+            date:scheduledDate,
 
-    creationType,
+            movements:positionsData.map(p=>({
+                concept:p.concept,
+                amount:p.incidents.Monto || 0
+            })),
 
-    timestamp:creationTimestamp,
+            total,
 
-    createdAt:
-        new Date(creationTimestamp)
-            .toLocaleString(),
+            timestamp:creationTimestamp,
 
-    createdFromDate:
-        scheduledDate,
+            createdAt:
+                new Date(creationTimestamp)
+                    .toLocaleString()
 
-    createdBy:
-        currentUser.employeeId
+        };
 
-};
+        if(editingReportId!==null){
 
-/* EDITAR */
+            await setDoc(
+                doc(
+                    db,
+                    "finance_movements",
+                    editingReportId
+                ),
+                movementDataBase
+            );
 
-if(editingReportId!==null){
+        }else{
 
-    await setDoc(
+            await addDoc(
+                collection(db,"finance_movements"),
+                movementDataBase
+            );
 
-        doc(
-    db,
-    "finance_movements",
-    editingReportId
-),
-
-        {
-            ...reportDataBase,
-            scheduledDate
         }
-
-    );
-
-}else{
-
-    /* CREAR MULTIPLES DIAS */
-
-
-    const checkedDays = [
-
-        ...document.querySelectorAll(
-            ".multiDay:checked"
-        )
-
-    ].map(cb=>parseInt(cb.value));
-
-/* SI NO SELECCIONA DÍAS
-   SOLO GUARDA LA FECHA NORMAL */
-
-if(checkedDays.length===0){
-
-    await addDoc(
-        collection(db,"finance_movements"),
-        {
-            ...reportDataBase,
-            scheduledDate
-        }
-    );
-
-}else{
-
-    const baseDate =
-        new Date(
-            scheduledDate + "T00:00:00"
-        );
-
-    /* OBTENER DOMINGO */
-
-    const sunday =
-        new Date(baseDate);
-
-    sunday.setDate(
-        baseDate.getDate() -
-        baseDate.getDay()
-    );
-
-    for(const day of checkedDays){
-
-        const newDate =
-            new Date(sunday);
-
-        newDate.setDate(
-            sunday.getDate() + day
-        );
-
-        const formattedDate =
-            formatDate(newDate);
-
-        await addDoc(
-            collection(db,"finance_movements"),
-            {
-                ...reportDataBase,
-                scheduledDate: formattedDate
-            }
-        );
-
-    }
-
-}
-
-}
 
         resetForm();
 
         showToast();
 
-        submitButton.disabled=false;
+        submitButton.disabled = false;
 
     }catch(error){
 
-        submitButton.disabled=false;
+        submitButton.disabled = false;
 
         console.error(error);
 
-        alert(
-            "Error al guardar programación"
-        );
+        alert("Error al guardar movimiento");
 
     }
-    
-}
 
+}
 window.submitReport=submitReport;
 
 function resetForm(){
@@ -2125,15 +2037,15 @@ if(endDate){
     return data.filter(r=>{
 
         const reportDate=
-            normalizeDate(r.scheduledDate);
+    normalizeDate(r.date);
 
         const warehouseMatch=
             warehouseFilter==="all" ||
-            r.warehouse===warehouseFilter;
+            r.movements?.some(m=>m.concept===warehouseFilter);
 
         const shiftMatch=
             shiftFilter==="all" ||
-            r.shift===shiftFilter;
+            r.type===shiftFilter;
 
         const dateMatch=
             reportDate>=startDate &&
@@ -2212,170 +2124,130 @@ window.selectIncident=selectIncident;
 
 function updateDashboard(data){
 
-    const filtered=
+    const filtered =
         filterReports(data);
 
-    let total=0;
+    let total = 0;
+    let incomeTotal = 0;
+    let expenseTotal = 0;
 
-    const incidentTotals={};
-
-    incidents.forEach(i=>{
-        incidentTotals[i]=0;
-    });
-
-    const warehouseTotals={};
+    const conceptTotals = {};
 
     warehouses.forEach(w=>{
-        warehouseTotals[w]=0;
+        conceptTotals[w]=0;
     });
 
-    let paidTotal=0;
-let unpaidTotal=0;
+    const trendTotals = {};
 
-const trendTotals={};
-
-    const history=
+    const history =
         document.getElementById("historyTable");
 
     history.innerHTML="";
 
     filtered.forEach(r=>{
 
-        let reportTotal=0;
+        const movementTotal =
+            r.total || 0;
 
-        r.positions.forEach(p=>{
+        if(r.type==="Ingreso"){
+            incomeTotal += movementTotal;
+        }
 
-            incidents.forEach(i=>{
+        if(r.type==="Gasto"){
+            expenseTotal += movementTotal;
+        }
 
-                const value=
-    p.incidents[i] || 0;
+        total = incomeTotal - expenseTotal;
 
-incidentTotals[i]+=value;
+        (r.movements || []).forEach(m=>{
 
-/* PAGADOS */
+            if(!conceptTotals[m.concept]){
+                conceptTotals[m.concept]=0;
+            }
 
-if(
-    i==="Vacaciones" ||
-    i==="Permiso con goce" ||
-    i==="Llenado de proceso (PAGADO)"
-){
-
-    paidTotal+=value;
-
-}else{
-
-    unpaidTotal+=value;
-
-}
-
-/* KPI ACTIVO */
-
-if(
-    activeIncident===null ||
-    activeIncident===i
-){
-    reportTotal+=value;
-}
-
-            });
+            conceptTotals[m.concept] += m.amount || 0;
 
         });
 
-        warehouseTotals[r.warehouse]+=reportTotal;
+        if(!trendTotals[r.date]){
+            trendTotals[r.date]=0;
+        }
 
-total+=reportTotal;
+        trendTotals[r.date] +=
+            r.type==="Ingreso"
+            ? movementTotal
+            : -movementTotal;
 
-/* TENDENCIA */
-
-if(!trendTotals[r.scheduledDate]){
-    trendTotals[r.scheduledDate]=0;
-}
-
-trendTotals[r.scheduledDate]+=reportTotal;
+        const conceptsText =
+            (r.movements || [])
+                .map(m=>`${m.concept}: $${m.amount}`)
+                .join("<br>");
 
         history.innerHTML += `
 
             <tr>
 
-                <td>${r.scheduledDate}</td>
+                <td>${r.date}</td>
                 <td>${r.username}</td>
-                <td>${r.warehouse}</td>
-                <td>${r.shift}</td>
-                <td>${reportTotal}</td>
-                
+                <td>${conceptsText}</td>
+                <td>${r.type}</td>
+                <td>$${movementTotal}</td>
+
+                <td>${r.type}</td>
+
+                <td>${r.createdAt || "-"}</td>
+
+                <td>-</td>
+
                 <td>
 
-    ${
-        r.creationType==="multi-day"
+                    <button
+                        onclick="viewReport('${r.id}')"
+                        style="
+                            padding:6px 10px;
+                            border:none;
+                            border-radius:8px;
+                            background:#4a90e2;
+                            color:white;
+                            font-weight:bold;
+                            cursor:pointer;
+                            margin-right:5px;
+                        "
+                    >
+                        👁
+                    </button>
 
-        ? "📋 Multi"
+                    <button
+                        onclick="editReport('${r.id}')"
+                        style="
+                            padding:6px 10px;
+                            border:none;
+                            border-radius:8px;
+                            background:#FFCC00;
+                            font-weight:bold;
+                            cursor:pointer;
+                            margin-right:5px;
+                        "
+                    >
+                        ✏️
+                    </button>
 
-        : r.creationType==="duplicated"
+                    <button
+                        onclick="deleteReport('${r.id}')"
+                        style="
+                            padding:6px 10px;
+                            border:none;
+                            border-radius:8px;
+                            background:#D40511;
+                            color:white;
+                            font-weight:bold;
+                            cursor:pointer;
+                        "
+                    >
+                        🗑
+                    </button>
 
-        ? "🔁 Duplicado"
-
-        : "✍ Manual"
-    }
-
-</td>
-
-<td>
-    ${r.createdAt || "-"}
-</td>
-
-<td>
-    ${r.generatedFrom || r.createdFromDate || "-"}
-</td>
-
-<td>
-
-    <button
-        onclick="viewReport('${r.id}')"
-        style="
-            padding:6px 10px;
-            border:none;
-            border-radius:8px;
-            background:#4a90e2;
-            color:white;
-            font-weight:bold;
-            cursor:pointer;
-            margin-right:5px;
-        "
-    >
-        👁
-    </button>
-
-    <button
-        onclick="editReport('${r.id}')"
-        style="
-            padding:6px 10px;
-            border:none;
-            border-radius:8px;
-            background:#FFCC00;
-            font-weight:bold;
-            cursor:pointer;
-            margin-right:5px;
-        "
-    >
-        ✏️
-    </button>
-
-    <button
-        onclick="deleteReport('${r.id}')"
-        style="
-            padding:6px 10px;
-            border:none;
-            border-radius:8px;
-            background:#D40511;
-            color:white;
-            font-weight:bold;
-            cursor:pointer;
-        "
-    >
-        🗑
-    </button>
-
-</td>
+                </td>
 
             </tr>
 
@@ -2385,56 +2257,62 @@ trendTotals[r.scheduledDate]+=reportTotal;
 
     renderDynamicKpis(
         total,
-        incidentTotals
+        {
+            Ingresos: incomeTotal,
+            Gastos: expenseTotal,
+            Balance: total
+        }
     );
 
-    lineChart.data.datasets[0].data=
+    lineChart.data.labels =
+        Object.keys(conceptTotals);
 
-        incidents.map(i=>{
+    lineChart.data.datasets[0].label =
+        "Gastos / Ingresos por concepto";
 
-            if(activeIncident && activeIncident!==i){
-                return 0;
-            }
-
-            return incidentTotals[i];
-
-        });
+    lineChart.data.datasets[0].data =
+        Object.values(conceptTotals);
 
     lineChart.update();
 
-    barChart.data.datasets[0].data=
-        warehouses.map(w=>warehouseTotals[w]);
+    barChart.data.labels =
+        Object.keys(conceptTotals);
+
+    barChart.data.datasets[0].label =
+        "Totales por concepto";
+
+    barChart.data.datasets[0].data =
+        Object.values(conceptTotals);
 
     barChart.update();
 
-    /* PAY */
+    payChart.data.labels=[
+        "Ingresos",
+        "Gastos"
+    ];
 
-payChart.data.datasets[0].data=[
-    paidTotal,
-    unpaidTotal
-];
+    payChart.data.datasets[0].data=[
+        incomeTotal,
+        expenseTotal
+    ];
 
-payChart.update();
+    payChart.update();
 
-/* TENDENCIA */
+    const orderedDates =
+        Object.keys(trendTotals).sort();
 
-const orderedDates=
-    Object.keys(trendTotals).sort();
+    trendChart.data.labels =
+        orderedDates;
 
-trendChart.data.labels=
-    orderedDates;
+    trendChart.data.datasets[0].label =
+        "Balance diario";
 
-trendChart.data.datasets[0].data=
+    trendChart.data.datasets[0].data =
+        orderedDates.map(d=>trendTotals[d]);
 
-    orderedDates.map(d=>
-        trendTotals[d]
-    );
+    trendChart.update();
 
-trendChart.update();
-
-}
-
-async function createUser(){
+}async function createUser(){
 
     try{
 
