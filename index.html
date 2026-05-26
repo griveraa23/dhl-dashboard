@@ -115,12 +115,14 @@ header h1{
 }
 
 .user-info{
-    background:white;
-    padding:10px 15px;
-    border-radius:12px;
+    background:#132238;
+    color:var(--text);
+    padding:12px 18px;
+    border-radius:16px;
     font-weight:bold;
+    border:1px solid var(--border);
+    box-shadow:0 4px 12px rgba(0,0,0,.25);
 }
-
 .logout-btn{
     border:none;
     background:var(--dhl-red);
@@ -1158,8 +1160,7 @@ function startSession(){
         .getElementById("activeUser")
         .innerHTML=
 `
-👤 ${currentUser.name}
-(admin)
+👤 ${currentUser.name} <span style="color:#8FA6C1;">(admin)</span>
 `;
 
 }else{
