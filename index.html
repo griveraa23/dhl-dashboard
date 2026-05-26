@@ -1752,18 +1752,6 @@ function closeManualConceptModal(){
 window.closeManualConceptModal=closeManualConceptModal;
 
 
-    selectedWarehouse=name;
-
-    document
-        .querySelectorAll("#warehouseSelectors .selector")
-        .forEach(el=>el.classList.remove("active"));
-
-    element.classList.add("active");
-
-    updateSummary();
-
-}    
-
 function selectShift(element,name){
 
     selectedShift=name;
