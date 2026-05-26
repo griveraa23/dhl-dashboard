@@ -1337,7 +1337,8 @@ const warehouses = [
 "Compras",
 "Ahorro",
 "Sueldo",
-"Ingreso extra"
+"Ingreso extra",
+"Otro",
 ];
     
 const positions = [
@@ -1621,13 +1622,39 @@ renderWarehouses();
 
 function selectWarehouse(element,name){
 
-    selectedWarehouse=name;
+    let finalName = name;
+
+    if(name==="Otro"){
+
+        const manualConcept =
+            prompt("Escribe el concepto manual:");
+
+        if(
+            manualConcept===null ||
+            manualConcept.trim()===""
+        ){
+            return;
+        }
+
+        finalName =
+            manualConcept.trim();
+
+    }
+
+    selectedWarehouse=finalName;
 
     document
         .querySelectorAll("#warehouseSelectors .selector")
         .forEach(el=>el.classList.remove("active"));
 
     element.classList.add("active");
+
+    if(name==="Otro"){
+
+        element.innerText =
+            `Otro: ${finalName}`;
+
+    }
 
     updateSummary();
 
@@ -2001,8 +2028,16 @@ function resetForm(){
         formatDate(new Date());
 
     document
-        .querySelectorAll("#warehouseSelectors .selector")
-        .forEach(el=>el.classList.remove("active"));
+    .querySelectorAll("#warehouseSelectors .selector")
+    .forEach(el=>{
+
+        el.classList.remove("active");
+
+        if(el.innerText.startsWith("Otro:")){
+            el.innerText="Otro";
+        }
+
+    });
 
     document
         .querySelectorAll(".shift")
