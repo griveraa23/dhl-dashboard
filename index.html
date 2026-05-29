@@ -539,6 +539,30 @@ border:1px solid var(--border);
     grid-template-columns:1fr;
 }
 
+.advisor-box{
+    margin-top:22px;
+    padding-top:18px;
+    border-top:1px solid var(--border);
+}
+
+.advisor-box h3{
+    margin-bottom:14px;
+    color:#EAF2FF;
+}
+
+.advisor-item{
+    background:#0B1626;
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:15px;
+    margin-bottom:12px;
+    line-height:1.4;
+}
+
+.advisor-item strong{
+    color:#00A3FF;
+}    
+    
 .insights-card .goal-item{
     min-height:auto;
 }
@@ -1382,6 +1406,35 @@ async function hashPassword(password){
 
 /* VARIABLES DEL SISTEMA */
 
+const FIXED_EXPENSES = [
+    "Pago de Carro",
+    "Renta",
+    "Tarjeta de crédito BBVA",
+    "Crédito BBVA"
+];
+
+const PROTECTED_EXPENSES = [
+    "AT&T",
+    "GYM",
+    "Internet",
+    "Netflix",
+    "HBO",
+    "Amazon Prime",
+    "Mascotas"
+];
+
+const VARIABLE_EXPENSES = [
+    "Comida",
+    "Gasolina",
+    "OXXO",
+    "Motel",
+    "Compras Amazon",
+    "Regalos u Obsequios",
+    "Entretenimiento",
+    "Compras",
+    "Otro"
+];
+    
 const warehouses = [
 "Comida",
 "Gasolina",
@@ -2669,18 +2722,31 @@ function renderGoalCard(balance, incomeTotal, expenseTotal){
 function renderInsightsBoard(data){
 
     let totalExpenses = 0;
+    let incomeTotal = 0;
+    let expenseTotal = 0;
 
     const conceptFrequency = {};
     const conceptAmounts = {};
+    const variableConceptAmounts = {};
     const weekdayTotals = {};
 
     let totalTransactions = 0;
 
     data.forEach(r=>{
 
+        const movementTotal =
+            Number(r.total || 0);
+
+        if(r.type==="Ingreso"){
+            incomeTotal += movementTotal;
+            return;
+        }
+
         if(r.type!=="Gasto"){
             return;
         }
+
+        expenseTotal += movementTotal;
 
         const date =
             new Date(r.date + "T00:00:00");
@@ -2697,171 +2763,202 @@ function renderInsightsBoard(data){
 
         (r.movements || []).forEach(m=>{
 
+            const concept =
+                m.concept || "Sin concepto";
+
             const amount =
                 Number(m.amount || 0);
 
             totalExpenses += amount;
-
             totalTransactions++;
 
-            /* FRECUENCIA */
-
-            if(!conceptFrequency[m.concept]){
-                conceptFrequency[m.concept]=0;
+            if(!conceptFrequency[concept]){
+                conceptFrequency[concept]=0;
             }
 
-            conceptFrequency[m.concept]++;
+            conceptFrequency[concept]++;
 
-            /* COSTOS */
-
-            if(!conceptAmounts[m.concept]){
-                conceptAmounts[m.concept]=0;
+            if(!conceptAmounts[concept]){
+                conceptAmounts[concept]=0;
             }
 
-            conceptAmounts[m.concept]+=amount;
-
-            /* DIAS */
+            conceptAmounts[concept]+=amount;
 
             weekdayTotals[weekday]+=amount;
+
+            const isReducible =
+                !FIXED_EXPENSES.includes(concept) &&
+                !PROTECTED_EXPENSES.includes(concept);
+
+            if(isReducible){
+
+                if(!variableConceptAmounts[concept]){
+                    variableConceptAmounts[concept]=0;
+                }
+
+                variableConceptAmounts[concept]+=amount;
+
+            }
 
         });
 
     });
 
-    /* MAYOR FUGA */
-
     let topExpenseConcept="-";
     let topExpenseAmount=0;
 
-    Object.entries(conceptAmounts)
-
+    Object.entries(variableConceptAmounts)
         .forEach(([concept,amount])=>{
 
             if(amount>topExpenseAmount){
-
                 topExpenseAmount=amount;
                 topExpenseConcept=concept;
-
             }
 
         });
-
-    /* MÁS RECURRENTE */
 
     let topFrequencyConcept="-";
     let topFrequencyCount=0;
 
     Object.entries(conceptFrequency)
-
         .forEach(([concept,count])=>{
 
             if(count>topFrequencyCount){
-
                 topFrequencyCount=count;
                 topFrequencyConcept=concept;
-
             }
 
         });
-
-    /* DIA MAS CARO */
 
     let topDay="-";
     let topDayAmount=0;
 
     Object.entries(weekdayTotals)
-
         .forEach(([day,total])=>{
 
             if(total>topDayAmount){
-
                 topDayAmount=total;
                 topDay=day;
-
             }
 
         });
 
     const averageTicket =
-
         totalTransactions>0
-
         ? totalExpenses / totalTransactions
-
         : 0;
 
-    document.getElementById(
-        "insightsBoard"
-    ).innerHTML = `
+    const expenseRatio =
+        incomeTotal>0
+        ? (expenseTotal / incomeTotal) * 100
+        : 0;
+
+    let financialStatus =
+        "Sin ingresos registrados";
+
+    if(incomeTotal>0){
+
+        if(expenseRatio<60){
+            financialStatus="🟢 Saludable";
+        }else if(expenseRatio<=85){
+            financialStatus="🟡 Atención";
+        }else{
+            financialStatus="🔴 Riesgo";
+        }
+
+    }
+
+    const balance =
+        incomeTotal - expenseTotal;
+
+    const savingOpportunity =
+        topExpenseAmount * 0.10;
+
+    let balanceMessage="";
+
+    if(balance>0){
+
+        balanceMessage =
+            `Terminaste el periodo seleccionado con <strong>$${balance.toLocaleString()}</strong> a favor.`;
+
+    }else if(balance<0){
+
+        balanceMessage =
+            `Terminaste el periodo seleccionado con <strong>$${Math.abs(balance).toLocaleString()}</strong> en contra.`;
+
+    }else{
+
+        balanceMessage =
+            `Terminaste el periodo seleccionado en equilibrio, sin saldo a favor ni en contra.`;
+
+    }
+
+    document.getElementById("insightsBoard").innerHTML = `
 
         <div class="goal-grid">
 
             <div class="goal-item">
-
-                <span>🔥 Mayor fuga</span>
-
+                <span>🔥 Mayor fuga variable</span>
                 <br><br>
-
-                <strong>
-                    ${topExpenseConcept}
-                </strong>
-
+                <strong>${topExpenseConcept}</strong>
                 <br>
-
                 $${topExpenseAmount.toLocaleString()}
-
             </div>
 
             <div class="goal-item">
-
                 <span>🔁 Más recurrente</span>
-
                 <br><br>
-
-                <strong>
-                    ${topFrequencyConcept}
-                </strong>
-
+                <strong>${topFrequencyConcept}</strong>
                 <br>
-
                 ${topFrequencyCount} movimientos
-
             </div>
 
             <div class="goal-item">
-
                 <span>📅 Día más caro</span>
-
                 <br><br>
-
-                <strong>
-                    ${topDay}
-                </strong>
-
+                <strong>${topDay}</strong>
                 <br>
-
                 $${topDayAmount.toLocaleString()}
-
             </div>
 
             <div class="goal-item">
-
                 <span>📊 Ticket promedio</span>
-
                 <br><br>
+                <strong>$${averageTicket.toFixed(0)}</strong>
+            </div>
 
-                <strong>
-                    $${averageTicket.toFixed(0)}
-                </strong>
+        </div>
 
+        <div class="advisor-box">
+
+            <h3>🤖 North Budget Advisor</h3>
+
+            <div class="advisor-item">
+                💡 Mayor oportunidad de ahorro:
+                <br>
+                <strong>${topExpenseConcept}</strong>.
+                Reducirlo 10% podría liberar aproximadamente
+                <strong>$${savingOpportunity.toFixed(0)}</strong>
+                en este periodo.
+            </div>
+
+            <div class="advisor-item">
+                💡 Tus gastos representan
+                <strong>${expenseRatio.toFixed(1)}%</strong>
+                de tus ingresos.
+                <br>
+                Estado: <strong>${financialStatus}</strong>.
+            </div>
+
+            <div class="advisor-item">
+                💡 ${balanceMessage}
             </div>
 
         </div>
 
     `;
 
-}
-    
+}    
 
 function updateDashboard(data){
 
