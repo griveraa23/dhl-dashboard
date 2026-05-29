@@ -516,29 +516,6 @@ border:1px solid var(--border);
     grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
 }    
 
-.advisor-box{
-    margin-top:22px;
-    padding-top:18px;
-    border-top:1px solid var(--border);
-}
-
-.advisor-box h3{
-    margin-bottom:14px;
-    color:#EAF2FF;
-}
-
-.advisor-item{
-    background:#0B1626;
-    border:1px solid var(--border);
-    border-radius:16px;
-    padding:15px;
-    margin-bottom:12px;
-    line-height:1.4;
-}
-
-.advisor-item strong{
-    color:#00A3FF;
-}
     
 @media(max-width:900px){
 
@@ -960,7 +937,7 @@ border:1px solid var(--border);
 
     <div class="chart-card insights-card">
 
-    <h2>🧠 Insights Financieros</h2>
+    <h2>🧠 Insights & Advisor</h2>
 
     <br>
 
@@ -2942,7 +2919,7 @@ function renderInsightsBoard(data){
 
     }
 
-    document.getElementById("insightsBoard").innerHTML = `
+        document.getElementById("insightsBoard").innerHTML = `
 
         <div class="goal-grid">
 
@@ -2976,38 +2953,27 @@ function renderInsightsBoard(data){
                 <strong>$${averageTicket.toFixed(0)}</strong>
             </div>
 
-        </div>
-
-        <div class="advisor-box">
-
-            <h3>🤖 North Budget Advisor</h3>
-
-            <div class="advisor-item">
-                💡 Mayor oportunidad de ahorro:
+            <div class="goal-item">
+                <span>💡 Oportunidad ahorro</span>
+                <br><br>
+                <strong>${topExpenseConcept}</strong>
                 <br>
-                <strong>${topExpenseConcept}</strong>.
-                Reducirlo 10% podría liberar aproximadamente
-                <strong>$${savingOpportunity.toFixed(0)}</strong>
-                en este periodo.
+                +$${savingOpportunity.toFixed(0)}
             </div>
 
-            <div class="advisor-item">
-                💡 Tus gastos representan
+            <div class="goal-item">
+                <span>⚠️ Salud financiera</span>
+                <br><br>
                 <strong>${expenseRatio.toFixed(1)}%</strong>
-                de tus ingresos.
                 <br>
-                Estado: <strong>${financialStatus}</strong>.
-            </div>
-
-            <div class="advisor-item">
-                💡 ${balanceMessage}
+                ${financialStatus}
             </div>
 
         </div>
 
     `;
 
-}    
+}
 
 function updateDashboard(data){
 
