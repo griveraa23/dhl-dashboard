@@ -897,7 +897,7 @@ border:1px solid var(--border);
 
     <div class="chart-card">
 
-        <h2>📈 Balance</h2>
+        <h2>📈 Flujo de Saldo</h2>
 
         <br>
 
@@ -911,7 +911,7 @@ border:1px solid var(--border);
 
     <div class="chart-card">
 
-        <h2>🏭 Movimientos por Concepto</h2>
+        <h2>💸 Top Gastos por Concepto</h2>
 
         <br>
 
@@ -2984,13 +2984,8 @@ function updateDashboard(data){
     let incomeTotal = 0;
     let expenseTotal = 0;
 
-    const conceptTotals = {};
-
-    warehouses.forEach(w=>{
-        conceptTotals[w]=0;
-    });
-
-    
+    const expenseConceptTotals = {};
+    const dailyTotals = {};
 
     const history =
         document.getElementById("historyTable");
@@ -3000,7 +2995,7 @@ function updateDashboard(data){
     filtered.forEach(r=>{
 
         const movementTotal =
-            r.total || 0;
+            Number(r.total || 0);
 
         if(r.type==="Ingreso"){
             incomeTotal += movementTotal;
@@ -3010,19 +3005,34 @@ function updateDashboard(data){
             expenseTotal += movementTotal;
         }
 
-        total = incomeTotal - expenseTotal;
+        const dailyValue =
+            r.type==="Ingreso"
+            ? movementTotal
+            : -movementTotal;
 
-        (r.movements || []).forEach(m=>{
+        if(!dailyTotals[r.date]){
+            dailyTotals[r.date]=0;
+        }
 
-            if(!conceptTotals[m.concept]){
-                conceptTotals[m.concept]=0;
-            }
+        dailyTotals[r.date] += dailyValue;
 
-            conceptTotals[m.concept] += m.amount || 0;
+        if(r.type==="Gasto"){
 
-        });
+            (r.movements || []).forEach(m=>{
 
-        
+                const concept =
+                    m.concept || "Sin concepto";
+
+                if(!expenseConceptTotals[concept]){
+                    expenseConceptTotals[concept]=0;
+                }
+
+                expenseConceptTotals[concept] +=
+                    Number(m.amount || 0);
+
+            });
+
+        }
 
         const conceptsText =
             (r.movements || [])
@@ -3037,11 +3047,9 @@ function updateDashboard(data){
                 <td>${r.username}</td>
                 <td>${conceptsText}</td>
                 <td>${r.type}</td>
-<td>$${movementTotal}</td>
-
-<td>${r.createdAt || "-"}</td>
-
-<td>${r.origin || "Manual"}</td>
+                <td>$${movementTotal}</td>
+                <td>${r.createdAt || "-"}</td>
+                <td>${r.origin || "Manual"}</td>
 
                 <td>
 
@@ -3099,6 +3107,101 @@ function updateDashboard(data){
 
     });
 
+    total = incomeTotal - expenseTotal;
+
+    renderDynamicKpis(
+        total,
+        {
+            Ingresos: incomeTotal,
+            Gastos: expenseTotal,
+            Balance: total
+        }
+    );
+
+    renderGoalCard(
+        total,
+        incomeTotal,
+        expenseTotal
+    );
+
+    renderInsightsBoard(filtered);
+
+    /* 📈 FLUJO DE SALDO */
+
+    const sortedDates =
+        Object.keys(dailyTotals).sort();
+
+    let runningBalance = 0;
+
+    const balanceFlow =
+        sortedDates.map(date=>{
+
+            runningBalance += dailyTotals[date];
+
+            return runningBalance;
+
+        });
+
+    lineChart.data.labels =
+        sortedDates;
+
+    lineChart.data.datasets[0].label =
+        "Saldo acumulado";
+
+    lineChart.data.datasets[0].data =
+        balanceFlow;
+
+    lineChart.update();
+
+    /* 💸 TOP GASTOS POR CONCEPTO */
+
+    const sortedExpenses =
+        Object.entries(expenseConceptTotals)
+            .sort((a,b)=>b[1]-a[1]);
+
+    const topExpenses =
+        sortedExpenses.slice(0,8);
+
+    const otherExpenses =
+        sortedExpenses
+            .slice(8)
+            .reduce((acc,item)=>acc+item[1],0);
+
+    if(otherExpenses>0){
+
+        topExpenses.push([
+            "Otros",
+            otherExpenses
+        ]);
+
+    }
+
+    barChart.data.labels =
+        topExpenses.map(item=>item[0]);
+
+    barChart.data.datasets[0].label =
+        "Gastos por concepto";
+
+    barChart.data.datasets[0].data =
+        topExpenses.map(item=>item[1]);
+
+    barChart.update();
+
+    /* 💰 INGRESOS VS GASTOS */
+
+    payChart.data.labels=[
+        "Ingresos",
+        "Gastos"
+    ];
+
+    payChart.data.datasets[0].data=[
+        incomeTotal,
+        expenseTotal
+    ];
+
+    payChart.update();
+
+}
     renderDynamicKpis(
         total,
         {
@@ -3192,7 +3295,7 @@ if(existingUser){
 }
 
         await setDoc(
-            doc(db,"users",employeeId),
+            doc(db,"finance_users",employeeId),
             {
                 employeeId,
                 password:hashedPassword,
@@ -3230,7 +3333,7 @@ async function toggleUserStatus(employeeId,currentStatus){
     try{
 
         await setDoc(
-            doc(db,"users",employeeId),
+            doc(db,"finance_users",employeeId),
             {
                 ...users.find(
                     u=>u.employeeId===employeeId
@@ -3321,7 +3424,7 @@ if(newPassword.trim()!==""){
 }
 
 await setDoc(
-    doc(db,"users",employeeId),
+    doc(db,"finance_users",employeeId),
     updatedData
 );
 
@@ -3363,7 +3466,7 @@ async function resetPassword(employeeId){
             );
 
         await setDoc(
-            doc(db,"users",employeeId),
+            doc(db,"finance_users",employeeId),
             {
                 ...user,
                 password:await hashPassword(tempPassword)
