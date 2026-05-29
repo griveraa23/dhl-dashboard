@@ -3018,22 +3018,31 @@ function updateDashboard(data){
 
         if(r.type==="Gasto"){
 
-            (r.movements || []).forEach(m=>{
+    (r.movements || []).forEach(m=>{
 
-                const concept =
-                    m.concept || "Sin concepto";
+        const concept =
+            m.concept || "Sin concepto";
 
-                if(!expenseConceptTotals[concept]){
-                    expenseConceptTotals[concept]=0;
-                }
+        const amount =
+            Number(m.amount || 0);
 
-                expenseConceptTotals[concept] +=
-                    Number(m.amount || 0);
+        const isFixedOrProtected =
+            FIXED_EXPENSES.includes(concept) ||
+            PROTECTED_EXPENSES.includes(concept);
 
-            });
-
+        if(isFixedOrProtected){
+            return;
         }
 
+        if(!expenseConceptTotals[concept]){
+            expenseConceptTotals[concept]=0;
+        }
+
+        expenseConceptTotals[concept] += amount;
+
+    });
+
+}
         const conceptsText =
             (r.movements || [])
                 .map(m=>`${m.concept}: $${m.amount}`)
@@ -3156,37 +3165,81 @@ function updateDashboard(data){
     /* 💸 TOP GASTOS POR CONCEPTO */
 
     const sortedExpenses =
-        Object.entries(expenseConceptTotals)
-            .sort((a,b)=>b[1]-a[1]);
+    Object.entries(expenseConceptTotals)
+        .sort((a,b)=>b[1]-a[1]);
 
-    const topExpenses =
-        sortedExpenses.slice(0,8);
+const topExpenses =
+    sortedExpenses.slice(0,8);
 
-    const otherExpenses =
-        sortedExpenses
-            .slice(8)
-            .reduce((acc,item)=>acc+item[1],0);
+const otherExpenseDetails =
+    sortedExpenses.slice(8);
 
-    if(otherExpenses>0){
+const otherExpenses =
+    otherExpenseDetails
+        .reduce((acc,item)=>acc+item[1],0);
 
-        topExpenses.push([
-            "Otros",
-            otherExpenses
-        ]);
+if(otherExpenses>0){
 
+    topExpenses.push([
+        "Otros",
+        otherExpenses,
+        otherExpenseDetails
+    ]);
+
+}
+
+barChart.data.labels =
+    topExpenses.map(item=>item[0]);
+
+barChart.data.datasets[0].label =
+    "Gastos variables por concepto";
+
+barChart.data.datasets[0].data =
+    topExpenses.map(item=>item[1]);
+
+barChart.data.datasets[0].otherDetails =
+    topExpenses.map(item=>item[2] || []);
+
+barChart.options.plugins = {
+    tooltip:{
+        callbacks:{
+            label:function(context){
+
+                const label =
+                    context.label || "";
+
+                const value =
+                    context.raw || 0;
+
+                if(label!=="Otros"){
+
+                    return `${label}: $${value.toLocaleString()}`;
+
+                }
+
+                const details =
+                    context.dataset.otherDetails[context.dataIndex] || [];
+
+                const lines = [
+                    `Otros: $${value.toLocaleString()}`
+                ];
+
+                details.forEach(item=>{
+
+                    lines.push(
+                        `${item[0]}: $${Number(item[1]).toLocaleString()}`
+                    );
+
+                });
+
+                return lines;
+
+            }
+        }
     }
+};
 
-    barChart.data.labels =
-        topExpenses.map(item=>item[0]);
-
-    barChart.data.datasets[0].label =
-        "Gastos por concepto";
-
-    barChart.data.datasets[0].data =
-        topExpenses.map(item=>item[1]);
-
-    barChart.update();
-
+barChart.update();
     /* 💰 INGRESOS VS GASTOS */
 
     payChart.data.labels=[
