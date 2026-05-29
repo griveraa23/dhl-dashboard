@@ -960,7 +960,7 @@ border:1px solid var(--border);
                     <tr>
 
                         <th>Fecha</th>
-                        <th>Usuario</th>
+                        <!-- <th>Usuario</th> -->
                         <th>Concepto</th>
                         <th>Movimiento</th>
                         <th>Total</th>
@@ -969,7 +969,7 @@ border:1px solid var(--border);
 
                         <th>Creado</th>
 
-                        <th>Origen</th>
+                        <!-- <th>Origen</th> -->
                         
                         <th>Acciones</th>
                         
@@ -1179,6 +1179,58 @@ border:1px solid var(--border);
 
 </div>
 
+<div id="deleteModal"
+    style="
+        display:none;
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,.65);
+        z-index:99999;
+        justify-content:center;
+        align-items:center;
+        padding:20px;
+    ">
+
+    <div style="
+        background:#101B2D;
+        color:#EAF2FF;
+        border:1px solid #22324A;
+        box-shadow:0 20px 60px rgba(0,0,0,.45);
+        width:100%;
+        max-width:420px;
+        border-radius:22px;
+        padding:25px;
+        text-align:center;
+    ">
+
+        <h2>🗑 Eliminar movimiento</h2>
+
+        <br>
+
+        <p style="color:#8FA6C1; line-height:1.5;">
+            ¿Seguro que quieres eliminar este movimiento?
+            <br>
+            Esta acción no se puede deshacer.
+        </p>
+
+        <br>
+
+        <button class="submit-btn"
+            style="background:#E53935;"
+            onclick="confirmDeleteReport()">
+            Sí, eliminar
+        </button>
+
+        <button class="remove-btn"
+            style="width:100%; margin-top:10px;"
+            onclick="closeDeleteModal()">
+            Cancelar
+        </button>
+
+    </div>
+
+</div>
+    
 <div class="toast" id="toast">
     Movimiento guardado correctamente
 </div>
@@ -1453,6 +1505,7 @@ let pendingManualElement=null;
 let reports=[];
 let activeIncident=null;
 let editingReportId=null;
+let pendingDeleteReportId=null;    
 
 const positionsData=[];    
     
@@ -3053,12 +3106,12 @@ function updateDashboard(data){
             <tr>
 
                 <td>${r.date}</td>
-                <td>${r.username}</td>
+                <!-- <td>${r.username}</td> -->
                 <td>${conceptsText}</td>
                 <td>${r.type}</td>
                 <td>$${movementTotal}</td>
                 <td>${r.createdAt || "-"}</td>
-                <td>${r.origin || "Manual"}</td>
+                <!-- <td>${r.origin || "Manual"}</td> -->
 
                 <td>
 
@@ -3698,41 +3751,59 @@ function exportToExcel(){
 }
 
 window.exportToExcel=exportToExcel;
-async function deleteReport(reportId){
+function deleteReport(reportId){
 
-    try{
+    pendingDeleteReportId = reportId;
 
-        const confirmDelete=
-            confirm(
-                "¿Eliminar movimiento?"
-            );
-
-        if(!confirmDelete){
-            return;
-        }
-
-        await deleteDoc(
-    doc(db,"finance_movements",reportId)
-);
-
-        alert(
-            "Movimiento eliminado"
-        );
-
-    }catch(error){
-
-        console.error(error);
-
-        alert(
-            "Error al eliminar"
-        );
-
-    }
+    document.getElementById("deleteModal").style.display =
+        "flex";
 
 }
 
 window.deleteReport=deleteReport;
 
+function closeDeleteModal(){
+
+    pendingDeleteReportId = null;
+
+    document.getElementById("deleteModal").style.display =
+        "none";
+
+}
+
+window.closeDeleteModal=closeDeleteModal;
+
+async function confirmDeleteReport(){
+
+    if(!pendingDeleteReportId){
+        return;
+    }
+
+    try{
+
+        await deleteDoc(
+            doc(
+                db,
+                "finance_movements",
+                pendingDeleteReportId
+            )
+        );
+
+        closeDeleteModal();
+
+        alert("Movimiento eliminado");
+
+    }catch(error){
+
+        console.error(error);
+
+        alert("Error al eliminar");
+
+    }
+
+}
+
+window.confirmDeleteReport=confirmDeleteReport;
 function editReport(reportId){
 
     const report =
