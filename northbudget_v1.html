@@ -45,90 +45,6 @@
         min-height: 100vh;
     }
 
-    /* ===== LOGIN ===== */
-    .login-screen {
-        position: fixed;
-        inset: 0;
-        background: linear-gradient(135deg, var(--bg-dark), #0B1B32);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 10000;
-        backdrop-filter: blur(4px);
-    }
-
-    .login-card {
-        width: 90%;
-        max-width: 420px;
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        padding: 2rem;
-        border-radius: var(--radius-xl);
-        box-shadow: var(--shadow-md);
-        animation: fadeInUp 0.4s ease;
-    }
-
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .login-card h1 {
-        text-align: center;
-        margin-bottom: 1.5rem;
-        font-size: 1.8rem;
-    }
-
-    .login-card input {
-        width: 100%;
-        padding: 0.875rem;
-        border-radius: var(--radius-md);
-        border: 1px solid var(--border);
-        background: var(--bg-input);
-        color: var(--text-primary);
-        font-size: 1rem;
-        margin-bottom: 1rem;
-        transition: var(--transition);
-    }
-
-    .login-card input:focus {
-        outline: none;
-        border-color: var(--primary);
-        box-shadow: 0 0 0 2px rgba(0, 163, 255, 0.2);
-    }
-
-    .login-btn {
-        width: 100%;
-        padding: 0.875rem;
-        border: none;
-        border-radius: var(--radius-md);
-        background: var(--primary);
-        color: white;
-        font-size: 1rem;
-        font-weight: bold;
-        cursor: pointer;
-        transition: var(--transition);
-    }
-
-    .login-btn:hover {
-        background: var(--primary-dark);
-        transform: translateY(-1px);
-    }
-
-    .login-error {
-        color: var(--danger);
-        text-align: center;
-        margin-top: 1rem;
-        display: none;
-        font-size: 0.875rem;
-    }
-
     /* ===== HEADER ===== */
     header {
         background: rgba(10, 37, 64, 0.95);
@@ -173,22 +89,6 @@
         font-weight: 500;
         border: 1px solid var(--border);
         font-size: 0.875rem;
-    }
-
-    .logout-btn {
-        border: none;
-        background: var(--danger);
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 2rem;
-        cursor: pointer;
-        font-weight: 500;
-        transition: var(--transition);
-    }
-
-    .logout-btn:hover {
-        background: #c62828;
-        transform: translateY(-1px);
     }
 
     /* ===== CONTAINER Y PÁGINAS ===== */
@@ -673,6 +573,17 @@
         }
     }
 
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
     /* ===== RESPONSIVE ===== */
     @media (max-width: 768px) {
         .container { padding: 1rem; }
@@ -703,63 +614,14 @@
 </head>
 <body>
 
-CÓDIGO PARA CREAR USUARIO DE PRUEBA (eliminar después)
-async function createTestUser() {
-    try {
-         Verificar si ya existe el usuario
-        const testUserId = "admin";
-        const testUserDoc = await getDocs(collection(db, "finance_users"));
-        let exists = false;
-        
-        testUserDoc.forEach(doc => {
-            if (doc.data().employeeId === testUserId) exists = true;
-        });
-        
-        if (!exists) {
-            const hashedPassword = await hashPassword("admin123");
-            await setDoc(doc(db, "finance_users", testUserId), {
-                employeeId: "admin",
-                password: hashedPassword,
-                name: "Administrador",
-                role: "admin",
-                active: true,
-                warehouses: []
-            });
-            console.log("✅ Usuario de prueba creado: admin / admin123");
-            showToast("Usuario admin creado", false);
-        } else {
-            console.log("⚠️ El usuario admin ya existe");
-        }
-    } catch (error) {
-        console.error("Error al crear usuario:", error);
-    }
-}
-
- Llama a esta función después de loadUsers() en startSession o al inicio
- Agrega esta línea después de donde llamas a loadUsers():
- await createTestUser();
-
-    
-<!-- LOGIN -->
-<div class="login-screen" id="loginScreen">
-    <div class="login-card">
-        <h1>💰 North Budget</h1>
-        <input type="text" id="employeeId" placeholder="Usuario" autocomplete="off">
-        <input type="password" id="password" placeholder="Contraseña">
-        <button class="login-btn" id="loginBtn">Ingresar</button>
-        <div class="login-error" id="loginError">Usuario o contraseña incorrectos</div>
-    </div>
-</div>
-
 <header>
     <h1>💰 North Budget</h1>
     <div class="header-right">
-        <div class="user-info" id="activeUser">👤 Cargando...</div>
+        <div class="user-info" id="activeUser">👤 Usuario Demo</div>
         <div class="datetime">
             <div id="date"></div>
             <div id="time"></div>
         </div>
-        <button class="logout-btn" id="logoutBtn">🔒 Cerrar sesión</button>
     </div>
 </header>
 
@@ -843,7 +705,7 @@ async function createTestUser() {
                 <h2>💸 Nuevo Movimiento</h2>
                 <br>
                 <label>👤 Usuario</label>
-                <input type="text" id="username" readonly style="background: var(--bg-input); opacity: 0.8;">
+                <input type="text" id="username" value="Usuario Demo" readonly style="background: var(--bg-input); opacity: 0.8;">
                 <br><br>
                 <label>📅 Fecha</label>
                 <input type="date" id="scheduledDate">
@@ -932,8 +794,6 @@ async function createTestUser() {
     ];
 
     // ==================== ESTADO GLOBAL ====================
-    let users = [];
-    let currentUser = null;
     let reports = [];
     let charts = {};
     
@@ -945,6 +805,13 @@ async function createTestUser() {
     let pendingDeleteId = null;
     let pendingManualElement = null;
 
+    // Usuario fijo para demo
+    const currentUser = {
+        name: "Usuario Demo",
+        employeeId: "demo001",
+        role: "admin"
+    };
+
     // ==================== UTILIDADES ====================
     function formatDate(date) {
         const year = date.getFullYear();
@@ -955,14 +822,6 @@ async function createTestUser() {
 
     function formatCurrency(value) {
         return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(value);
-    }
-
-    async function hashPassword(password) {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(password);
-        const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
     }
 
     function showToast(message, isError = false) {
@@ -981,46 +840,6 @@ async function createTestUser() {
         document.getElementById(modalId).classList.add("active");
     }
 
-    // ==================== USUARIOS ====================
-    async function loadUsers() {
-        const snapshot = await getDocs(collection(db, "finance_users"));
-        users = [];
-        snapshot.forEach(doc => users.push(doc.data()));
-    }
-
-    async function login() {
-        const employeeId = document.getElementById("employeeId").value;
-        const password = document.getElementById("password").value;
-        
-        if (users.length === 0) await loadUsers();
-        
-        const hashedPassword = await hashPassword(password);
-        const user = users.find(u => u.employeeId === employeeId && u.password === hashedPassword && u.active === true);
-        
-        if (!user) {
-            document.getElementById("loginError").style.display = "block";
-            return;
-        }
-        
-        currentUser = user;
-        localStorage.setItem("northBudgetUser", JSON.stringify(user));
-        startSession();
-    }
-
-    function startSession() {
-        document.getElementById("loginScreen").style.display = "none";
-        document.getElementById("activeUser").innerHTML = `👤 ${currentUser.name}${currentUser.role === "admin" ? ' <span style="color:var(--text-muted);">(admin)</span>' : ''}`;
-        document.getElementById("username").value = currentUser.name;
-        updateClock();
-        loadReports();
-        setTimeout(() => setQuickFilter("month"), 500);
-    }
-
-    function logout() {
-        localStorage.removeItem("northBudgetUser");
-        location.reload();
-    }
-
     // ==================== RELOJ ====================
     function updateClock() {
         const now = new Date();
@@ -1028,6 +847,7 @@ async function createTestUser() {
         document.getElementById("time").innerText = now.toLocaleTimeString('es-MX');
     }
     setInterval(updateClock, 1000);
+    updateClock();
 
     // ==================== NAVEGACIÓN ====================
     function initNavigation() {
@@ -1176,7 +996,6 @@ async function createTestUser() {
         
         tbody.innerHTML = html;
         
-        // Agregar event listeners a los botones
         document.querySelectorAll('.action-btn.view').forEach(btn => {
             btn.addEventListener('click', () => viewReport(btn.dataset.id));
         });
@@ -1212,7 +1031,6 @@ async function createTestUser() {
             dailyBalance[date] = (dailyBalance[date] || 0) + (r.type === "Ingreso" ? amount : -amount);
         });
         
-        // Línea de tiempo
         const sortedDates = Object.keys(dailyBalance).sort();
         let runningBalance = 0;
         const balanceFlow = sortedDates.map(date => runningBalance += dailyBalance[date]);
@@ -1223,7 +1041,6 @@ async function createTestUser() {
             charts.lineChart.update();
         }
         
-        // Top gastos
         const sortedExpenses = Object.entries(expenseByConcept).sort((a,b) => b[1] - a[1]).slice(0, 8);
         if (charts.barChart) {
             charts.barChart.data.labels = sortedExpenses.map(e => e[0]);
@@ -1231,7 +1048,6 @@ async function createTestUser() {
             charts.barChart.update();
         }
         
-        // Doughnut
         if (charts.payChart) {
             charts.payChart.data.datasets[0].data = [incomeTotal, expenseTotal];
             charts.payChart.update();
@@ -1343,7 +1159,6 @@ async function createTestUser() {
             </div>
         `).join("");
         
-        // Event listeners para montos
         container.querySelectorAll('input[type="number"]').forEach(input => {
             input.addEventListener("change", (e) => {
                 const idx = parseInt(e.target.dataset.index);
@@ -1411,6 +1226,7 @@ async function createTestUser() {
                 showToast("Movimiento guardado");
             }
             resetForm();
+            updateDashboard();
         } catch (error) {
             console.error(error);
             showToast("Error al guardar", true);
@@ -1441,7 +1257,6 @@ async function createTestUser() {
         selectedConcept = report.movements[0]?.concept || "";
         movementsList = report.movements.map(m => ({ concept: m.concept, amount: m.amount }));
         
-        // Marcar activos
         document.querySelectorAll("#typeSelectors .selector").forEach(s => {
             if (s.dataset.type === selectedType) s.classList.add("active");
             else s.classList.remove("active");
@@ -1492,6 +1307,7 @@ async function createTestUser() {
             showToast("Movimiento eliminado");
             closeModal("deleteModal");
             pendingDeleteId = null;
+            updateDashboard();
         } catch (error) {
             showToast("Error al eliminar", true);
         }
@@ -1552,8 +1368,6 @@ async function createTestUser() {
 
     // ==================== EVENT LISTENERS ====================
     function bindEvents() {
-        document.getElementById("loginBtn")?.addEventListener("click", login);
-        document.getElementById("logoutBtn")?.addEventListener("click", logout);
         document.getElementById("addPositionBtn")?.addEventListener("click", addMovementBlock);
         document.getElementById("submitReportBtn")?.addEventListener("click", submitReport);
         document.getElementById("confirmDeleteBtn")?.addEventListener("click", confirmDelete);
@@ -1576,7 +1390,6 @@ async function createTestUser() {
         document.getElementById("startDate")?.addEventListener("change", () => updateDashboard());
         document.getElementById("endDate")?.addEventListener("change", () => updateDashboard());
         
-        // Cerrar modales al hacer clic fuera
         document.querySelectorAll(".modal").forEach(modal => {
             modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("active"); });
         });
@@ -1607,17 +1420,12 @@ async function createTestUser() {
         });
     }
 
-    // ==================== CHECK SAVED SESSION ====================
-    const savedUser = localStorage.getItem("northBudgetUser");
-    if (savedUser) {
-        currentUser = JSON.parse(savedUser);
-        startSession();
-    }
-
-    // Inicializar todo
+    // ==================== INICIALIZAR TODO ====================
     document.getElementById("scheduledDate").value = formatDate(new Date());
     document.getElementById("startDate").value = formatDate(new Date());
     document.getElementById("endDate").value = formatDate(new Date());
+    document.getElementById("activeUser").innerHTML = `👤 ${currentUser.name}`;
+    document.getElementById("username").value = currentUser.name;
     
     initCharts();
     initNavigation();
@@ -1626,8 +1434,8 @@ async function createTestUser() {
     initTypeSelectors();
     bindEvents();
     
-    setInterval(updateClock, 1000);
-    updateClock();
+    loadReports();
+    setTimeout(() => setQuickFilter("month"), 500);
 </script>
 </body>
 </html>
