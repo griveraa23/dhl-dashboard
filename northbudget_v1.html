@@ -703,6 +703,43 @@
 </head>
 <body>
 
+CÓDIGO PARA CREAR USUARIO DE PRUEBA (eliminar después)
+async function createTestUser() {
+    try {
+         Verificar si ya existe el usuario
+        const testUserId = "admin";
+        const testUserDoc = await getDocs(collection(db, "finance_users"));
+        let exists = false;
+        
+        testUserDoc.forEach(doc => {
+            if (doc.data().employeeId === testUserId) exists = true;
+        });
+        
+        if (!exists) {
+            const hashedPassword = await hashPassword("admin123");
+            await setDoc(doc(db, "finance_users", testUserId), {
+                employeeId: "admin",
+                password: hashedPassword,
+                name: "Administrador",
+                role: "admin",
+                active: true,
+                warehouses: []
+            });
+            console.log("✅ Usuario de prueba creado: admin / admin123");
+            showToast("Usuario admin creado", false);
+        } else {
+            console.log("⚠️ El usuario admin ya existe");
+        }
+    } catch (error) {
+        console.error("Error al crear usuario:", error);
+    }
+}
+
+ Llama a esta función después de loadUsers() en startSession o al inicio
+ Agrega esta línea después de donde llamas a loadUsers():
+ await createTestUser();
+
+    
 <!-- LOGIN -->
 <div class="login-screen" id="loginScreen">
     <div class="login-card">
