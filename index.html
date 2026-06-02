@@ -2971,16 +2971,8 @@ function getRecurringCommitmentAnalysis(allReports){
 
     });
 
-    const lastIncomes =
-        historicalIncome
-            .slice(-3);
-
     const estimatedIncome =
-        currentIncome > 0
-        ? currentIncome
-        : lastIncomes.length > 0
-            ? lastIncomes.reduce((a,b)=>a+b,0) / lastIncomes.length
-            : BIWEEKLY_INCOME_FALLBACK;
+    currentIncome
 
     const commitments = [];
     const covered = [];
@@ -2998,8 +2990,7 @@ function getRecurringCommitmentAnalysis(allReports){
         if(BIWEEKLY_DEFAULT_COMMITMENTS[concept]){
 
             expectedAmount =
-                history[0]?.amount ||
-                BIWEEKLY_DEFAULT_COMMITMENTS[concept];
+    BIWEEKLY_DEFAULT_COMMITMENTS[concept];
 
             shouldApply = true;
 
@@ -3068,7 +3059,9 @@ function getRecurringCommitmentAnalysis(allReports){
         covered,
         totalPending,
         available:
-            estimatedIncome - totalPending
+    estimatedIncome > 0
+    ? estimatedIncome - totalPending
+    : 0
     };
 
 }
