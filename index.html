@@ -1452,6 +1452,12 @@ const PROTECTED_EXPENSES = [
     "Mascotas"
 ];
 
+const BIWEEKLY_INCOME_FALLBACK = 8000;
+
+const BIWEEKLY_DEFAULT_COMMITMENTS = {
+    "Pago de Carro":3000
+};    
+
 const VARIABLE_EXPENSES = [
     "Comida",
     "Gasolina",
@@ -2798,6 +2804,275 @@ estimatedDaysText =
 
 }
 
+function getCurrentBiweeklyRange(){
+
+    const referencePayDate =
+        new Date("2026-05-20T00:00:00");
+
+    const today =
+        new Date();
+
+    const msPerDay =
+        1000 * 60 * 60 * 24;
+
+    const diffDays =
+        Math.floor(
+            (today - referencePayDate) / msPerDay
+        );
+
+    const cycles =
+        Math.floor(diffDays / 14);
+
+    const start =
+        new Date(referencePayDate);
+
+    start.setDate(
+        referencePayDate.getDate() + cycles * 14
+    );
+
+    const end =
+        new Date(start);
+
+    end.setDate(
+        start.getDate() + 13
+    );
+
+    return { start, end };
+
+}
+
+function isDateBetween(date,start,end){
+
+    return date >= start && date <= end;
+
+}
+
+function isDayInsideRange(day,start,end){
+
+    const current =
+        new Date(start);
+
+    while(current <= end){
+
+        if(current.getDate() === day){
+            return true;
+        }
+
+        current.setDate(
+            current.getDate() + 1
+        );
+
+    }
+
+    return false;
+
+}
+
+function getRecurringCommitmentAnalysis(allReports){
+
+    const recurringConcepts = [
+        ...FIXED_EXPENSES,
+        ...PROTECTED_EXPENSES
+    ];
+
+    const { start, end } =
+        getCurrentBiweeklyRange();
+
+    start.setHours(0,0,0,0);
+    end.setHours(23,59,59,999);
+
+    const historyStart =
+        new Date(start);
+
+    historyStart.setDate(
+        start.getDate() - 45
+    );
+
+    const historicalPayments = {};
+    const paidCurrentPeriod = {};
+    const historicalIncome = [];
+
+    let currentIncome = 0;
+
+    allReports.forEach(r=>{
+
+        const reportDate =
+            normalizeDate(r.date);
+
+        if(!reportDate){
+            return;
+        }
+
+        if(r.type === "Ingreso"){
+
+            const incomeAmount =
+                Number(r.total || 0);
+
+            if(isDateBetween(reportDate,start,end)){
+
+                currentIncome += incomeAmount;
+
+            }else if(reportDate < start){
+
+                historicalIncome.push(incomeAmount);
+
+            }
+
+            return;
+
+        }
+
+        if(r.type !== "Gasto"){
+            return;
+        }
+
+        (r.movements || []).forEach(m=>{
+
+            const concept =
+                m.concept || "Sin concepto";
+
+            if(!recurringConcepts.includes(concept)){
+                return;
+            }
+
+            const amount =
+                Number(m.amount || 0);
+
+            if(isDateBetween(reportDate,start,end)){
+
+                if(!paidCurrentPeriod[concept]){
+                    paidCurrentPeriod[concept]=0;
+                }
+
+                paidCurrentPeriod[concept] += amount;
+
+                return;
+
+            }
+
+            if(
+                reportDate >= historyStart &&
+                reportDate < start
+            ){
+
+                if(!historicalPayments[concept]){
+                    historicalPayments[concept]=[];
+                }
+
+                historicalPayments[concept].push({
+                    date:reportDate,
+                    day:reportDate.getDate(),
+                    amount
+                });
+
+            }
+
+        });
+
+    });
+
+    const lastIncomes =
+        historicalIncome
+            .slice(-3);
+
+    const estimatedIncome =
+        currentIncome > 0
+        ? currentIncome
+        : lastIncomes.length > 0
+            ? lastIncomes.reduce((a,b)=>a+b,0) / lastIncomes.length
+            : BIWEEKLY_INCOME_FALLBACK;
+
+    const commitments = [];
+    const covered = [];
+
+    recurringConcepts.forEach(concept=>{
+
+        const history =
+            historicalPayments[concept] || [];
+
+        history.sort((a,b)=>b.date-a.date);
+
+        let expectedAmount = 0;
+        let shouldApply = false;
+
+        if(BIWEEKLY_DEFAULT_COMMITMENTS[concept]){
+
+            expectedAmount =
+                history[0]?.amount ||
+                BIWEEKLY_DEFAULT_COMMITMENTS[concept];
+
+            shouldApply = true;
+
+        }else if(history.length > 0){
+
+            const latest =
+                history[0];
+
+            expectedAmount =
+                latest.amount;
+
+            shouldApply =
+                isDayInsideRange(
+                    latest.day,
+                    start,
+                    end
+                );
+
+        }
+
+        if(!shouldApply){
+            return;
+        }
+
+        const alreadyPaid =
+            paidCurrentPeriod[concept] || 0;
+
+        const pending =
+            Math.max(
+                expectedAmount - alreadyPaid,
+                0
+            );
+
+        if(pending > 0){
+
+            commitments.push({
+                concept,
+                expectedAmount,
+                alreadyPaid,
+                pending
+            });
+
+        }else{
+
+            covered.push({
+                concept,
+                expectedAmount,
+                alreadyPaid
+            });
+
+        }
+
+    });
+
+    const totalPending =
+        commitments.reduce(
+            (acc,item)=>acc+item.pending,
+            0
+        );
+
+    return {
+        start,
+        end,
+        estimatedIncome,
+        commitments,
+        covered,
+        totalPending,
+        available:
+            estimatedIncome - totalPending
+    };
+
+}
+    
 function renderInsightsBoard(data){
 
     let totalExpenses = 0;
@@ -2953,6 +3228,18 @@ function renderInsightsBoard(data){
     const savingOpportunity =
         topExpenseAmount * 0.10;
 
+    const commitmentAnalysis =
+    getRecurringCommitmentAnalysis(reports);
+
+    const commitmentHtml =
+    commitmentAnalysis.commitments.length > 0
+    ? commitmentAnalysis.commitments
+        .map(item=>`
+            ${item.concept}: $${item.pending.toLocaleString()}
+        `)
+        .join("<br>")
+    : "Sin pagos pendientes ✅";
+
     let balanceMessage="";
 
     if(balance>0){
@@ -3021,6 +3308,26 @@ function renderInsightsBoard(data){
                 <br>
                 ${financialStatus}
             </div>
+
+            <div class="goal-item">
+    <span>🧾 Comprometido catorcena</span>
+    <br><br>
+    <strong>$${commitmentAnalysis.totalPending.toLocaleString()}</strong>
+    <br>
+    <span style="font-size:13px;">
+        ${commitmentHtml}
+    </span>
+</div>
+
+<div class="goal-item">
+    <span>💵 Disponible estimado</span>
+    <br><br>
+    <strong>$${commitmentAnalysis.available.toLocaleString()}</strong>
+    <br>
+    <span style="font-size:13px;">
+        Ingreso estimado: $${commitmentAnalysis.estimatedIncome.toFixed(0)}
+    </span>
+</div>
 
         </div>
 
