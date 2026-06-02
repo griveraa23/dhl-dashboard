@@ -2806,6 +2806,28 @@ estimatedDaysText =
 
 function getCurrentBiweeklyRange(){
 
+    const filterStart =
+        normalizeDate(
+            document.getElementById("startDate").value
+        );
+
+    const filterEnd =
+        normalizeDate(
+            document.getElementById("endDate").value
+        );
+
+    if(filterStart && filterEnd){
+
+        filterStart.setHours(0,0,0,0);
+        filterEnd.setHours(23,59,59,999);
+
+        return {
+            start:filterStart,
+            end:filterEnd
+        };
+
+    }
+
     const referencePayDate =
         new Date("2026-05-20T00:00:00");
 
