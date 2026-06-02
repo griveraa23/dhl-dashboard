@@ -2915,6 +2915,7 @@ function getRecurringCommitmentAnalysis(allReports){
     const historicalIncome = [];
 
     let currentIncome = 0;
+    let currentExpenses = 0;
 
     allReports.forEach(r=>{
 
@@ -2947,6 +2948,10 @@ function getRecurringCommitmentAnalysis(allReports){
         if(r.type !== "Gasto"){
             return;
         }
+
+        if(isDateBetween(reportDate,start,end)){
+    currentExpenses += Number(r.total || 0);
+}
 
         (r.movements || []).forEach(m=>{
 
@@ -3082,7 +3087,7 @@ function getRecurringCommitmentAnalysis(allReports){
         totalPending,
         available:
     estimatedIncome > 0
-    ? estimatedIncome - totalPending
+    ? estimatedIncome - currentExpenses - totalPending
     : 0
     };
 
@@ -3335,7 +3340,7 @@ function renderInsightsBoard(data){
 </div>
 
 <div class="goal-item">
-    <span>💵 Disponible estimado</span>
+    <span>💵 Disponible real</span>
     <br><br>
     <strong>$${commitmentAnalysis.available.toLocaleString()}</strong>
     <br>
